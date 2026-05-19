@@ -1,0 +1,14 @@
+fastapi
+uvicorn
+mysql-connector-python
+SQLAlchemy
+pydantic
+beautifulsoup4
+selenium
+undetected-chromedriver
+fake-useragent
+sentence-transformers
+scikit-learn
+Sastrawi
+nltk
+pandas

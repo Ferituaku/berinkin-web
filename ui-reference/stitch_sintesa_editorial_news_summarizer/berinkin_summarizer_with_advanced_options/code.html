@@ -1,0 +1,256 @@
+<!DOCTYPE html>
+
+<html lang="id"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Konfigurasi Peringkas - Sintesa Daily</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com" rel="preconnect"/>
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600&amp;family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;0,6..72,600;1,6..72,400&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "on-primary-fixed": "#002117",
+                        "on-primary": "#ffffff",
+                        "background": "#faf9f6",
+                        "surface-bright": "#faf9f6",
+                        "on-secondary-fixed-variant": "#574500",
+                        "surface": "#faf9f6",
+                        "primary-fixed": "#b0f0d6",
+                        "on-secondary-fixed": "#241a00",
+                        "on-tertiary-fixed-variant": "#304d35",
+                        "surface-variant": "#e3e2e0",
+                        "outline-variant": "#bfc9c3",
+                        "on-error-container": "#93000a",
+                        "surface-dim": "#dbdad7",
+                        "primary-fixed-dim": "#95d3ba",
+                        "inverse-on-surface": "#f2f1ee",
+                        "outline": "#707974",
+                        "on-surface-variant": "#404944",
+                        "on-background": "#1a1c1a",
+                        "tertiary-fixed": "#c8ebca",
+                        "on-tertiary": "#ffffff",
+                        "on-error": "#ffffff",
+                        "inverse-primary": "#95d3ba",
+                        "on-secondary-container": "#745c00",
+                        "tertiary": "#17341e",
+                        "primary": "#003527",
+                        "surface-container-lowest": "#ffffff",
+                        "surface-container-highest": "#e3e2e0",
+                        "inverse-surface": "#2f312f",
+                        "on-surface": "#1a1c1a",
+                        "on-secondary": "#ffffff",
+                        "secondary": "#735c00",
+                        "on-primary-container": "#80bea6",
+                        "error-container": "#ffdad6",
+                        "on-primary-fixed-variant": "#0b513d",
+                        "tertiary-fixed-dim": "#adcfaf",
+                        "tertiary-container": "#2d4b33",
+                        "surface-container-low": "#f4f3f1",
+                        "primary-container": "#064e3b",
+                        "on-tertiary-container": "#99ba9b",
+                        "surface-container": "#efeeeb",
+                        "secondary-fixed": "#ffe088",
+                        "secondary-fixed-dim": "#e9c349",
+                        "surface-tint": "#2b6954",
+                        "secondary-container": "#fed65b",
+                        "on-tertiary-fixed": "#03210c",
+                        "error": "#ba1a1a",
+                        "surface-container-high": "#e9e8e5"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.125rem",
+                        "lg": "0.25rem",
+                        "xl": "0.5rem",
+                        "full": "0.75rem"
+                    },
+                    "spacing": {
+                        "gutter": "24px",
+                        "container-max": "1200px",
+                        "unit": "4px",
+                        "margin": "40px"
+                    },
+                    "fontFamily": {
+                        "label-sm": ["Inter"],
+                        "body-md": ["Inter"],
+                        "body-lg": ["Inter"],
+                        "display-xl": ["Newsreader"],
+                        "headline-md": ["Newsreader"],
+                        "headline-lg": ["Newsreader"]
+                    },
+                    "fontSize": {
+                        "label-sm": ["12px", { "lineHeight": "1", "letterSpacing": "0.1em", "fontWeight": "600" }],
+                        "body-md": ["16px", { "lineHeight": "1.5", "letterSpacing": "0.01em", "fontWeight": "400" }],
+                        "body-lg": ["18px", { "lineHeight": "1.6", "letterSpacing": "0.01em", "fontWeight": "300" }],
+                        "display-xl": ["48px", { "lineHeight": "1.1", "letterSpacing": "-0.02em", "fontWeight": "600" }],
+                        "headline-md": ["24px", { "lineHeight": "1.3", "fontWeight": "500" }],
+                        "headline-lg": ["32px", { "lineHeight": "1.2", "letterSpacing": "-0.01em", "fontWeight": "500" }]
+                    }
+                }
+            }
+        }
+    </script>
+<style>
+        /* Custom range slider styling for minimalist editorial look */
+        input[type=range] {
+            -webkit-appearance: none;
+            width: 100%;
+            background: transparent;
+        }
+        input[type=range]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            height: 16px;
+            width: 16px;
+            border-radius: 50%;
+            background: #064E3B; /* Deep Forest Green / primary-container */
+            cursor: pointer;
+            margin-top: -7px;
+            border: 2px solid #faf9f6; /* Surface bright */
+            box-shadow: 0 0 0 1px #064E3B;
+        }
+        input[type=range]::-webkit-slider-runnable-track {
+            width: 100%;
+            height: 2px;
+            cursor: pointer;
+            background: #e3e2e0; /* surface-variant */
+            border-radius: 1px;
+        }
+        input[type=range]:focus {
+            outline: none;
+        }
+        input[type=range]:focus::-webkit-slider-runnable-track {
+            background: #bfc9c3; /* outline-variant */
+        }
+        
+        /* Checkbox styling */
+        .peer:checked ~ .peer-checked\:bg-primary-container {
+            background-color: #064e3b;
+        }
+        .peer:checked ~ .peer-checked\:border-primary-container {
+            border-color: #064e3b;
+        }
+        .peer:checked ~ div .peer-checked\:block {
+            display: block;
+        }
+    </style>
+</head>
+<body class="bg-background text-on-background antialiased min-h-screen flex flex-col font-body-md text-body-md selection:bg-tertiary-fixed selection:text-tertiary">
+<!-- TopAppBar -->
+<header class="fixed top-0 w-full z-50 bg-white/80 dark:bg-stone-900/80 backdrop-blur-md border-b border-stone-200/50 dark:border-stone-800/50 flat no shadows">
+<div class="flex justify-between items-center px-8 h-20 w-full max-w-7xl mx-auto">
+<div class="text-2xl font-bold font-serif text-emerald-900 dark:text-emerald-50">Sintesa Daily</div>
+<nav class="hidden md:flex gap-8 items-center">
+<a class="text-stone-500 dark:text-stone-400 font-medium uppercase tracking-widest text-[10px] hover:text-emerald-700 dark:hover:text-emerald-300 transition-colors duration-300 scale-95 active:transition-transform" href="#">Beranda</a>
+<a class="text-emerald-900 dark:text-emerald-50 border-b border-emerald-900 dark:border-emerald-50 pb-1 hover:text-emerald-700 dark:hover:text-emerald-300 transition-colors duration-300 scale-95 active:transition-transform" href="#">Peringkas</a>
+<a class="text-stone-500 dark:text-stone-400 font-medium uppercase tracking-widest text-[10px] hover:text-emerald-700 dark:hover:text-emerald-300 transition-colors duration-300 scale-95 active:transition-transform" href="#">Hasil</a>
+</nav>
+<div class="flex items-center gap-4 text-emerald-900 dark:text-emerald-50">
+<button class="hover:text-emerald-700 dark:hover:text-emerald-300 transition-colors duration-300 scale-95 active:transition-transform">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 0;">account_circle</span>
+</button>
+</div>
+</div>
+</header>
+<!-- Main Content Canvas -->
+<main class="flex-grow pt-[120px] pb-32 px-4 md:px-margin max-w-container-max mx-auto w-full">
+<!-- Header Section -->
+<div class="mb-16 text-center max-w-2xl mx-auto">
+<h1 class="font-display-xl text-display-xl text-primary mb-4">Ringkasan Pikiran</h1>
+<p class="font-body-lg text-body-lg text-on-surface-variant">Konfigurasikan parameter ekstraksi untuk mensintesis berita hari ini secara mendalam.</p>
+</div>
+<!-- Configuration Form Area -->
+<div class="max-w-xl mx-auto bg-white/80 backdrop-blur-[12px] border-[0.5px] border-outline-variant p-8 relative rounded-DEFAULT">
+<!-- Network Nodes -->
+<div class="absolute -top-[3px] -left-[3px] w-1.5 h-1.5 bg-primary-container"></div>
+<div class="absolute -top-[3px] -right-[3px] w-1.5 h-1.5 bg-primary-container"></div>
+<div class="absolute -bottom-[3px] -left-[3px] w-1.5 h-1.5 bg-primary-container"></div>
+<div class="absolute -bottom-[3px] -right-[3px] w-1.5 h-1.5 bg-primary-container"></div>
+<form class="space-y-10">
+<!-- Category Field -->
+<div class="space-y-2">
+<label class="block font-label-sm text-label-sm text-on-surface-variant uppercase">Kategori Berita</label>
+<div class="relative">
+<select class="w-full bg-transparent border-0 border-b border-surface-tint focus:border-primary-container focus:ring-0 px-0 py-3 font-body-md text-body-md text-on-surface appearance-none cursor-pointer">
+<option value="all">Semua Kategori (Konvergensi Total)</option>
+<option value="politics">Politik &amp; Kebijakan</option>
+<option value="economy">Ekonomi &amp; Pasar</option>
+<option value="tech">Teknologi &amp; Inovasi</option>
+<option value="global">Geopolitik Global</option>
+</select>
+<span class="material-symbols-outlined absolute right-0 top-1/2 -translate-y-1/2 pointer-events-none text-surface-tint">expand_more</span>
+</div>
+</div>
+<!-- Date Range Field -->
+<div class="space-y-2">
+<label class="block font-label-sm text-label-sm text-on-surface-variant uppercase">Tanggal Berita</label>
+<div class=""><div class="relative w-full"><input class="w-full bg-transparent border-0 border-b border-surface-tint focus:border-primary-container focus:ring-0 px-0 py-3 font-body-md text-body-md text-on-surface cursor-pointer" type="date" value="2023-10-25"/></div></div>
+</div>
+<!-- Advanced Options Accordion -->
+<div class="border border-outline-variant/50 rounded-DEFAULT overflow-hidden">
+<!-- Checkbox hack for pure HTML/CSS accordion -->
+<input class="peer hidden" id="advanced-options-toggle" type="checkbox"/>
+<label class="flex justify-between items-center p-4 cursor-pointer bg-surface/50 hover:bg-surface transition-colors select-none" for="advanced-options-toggle">
+<span class="font-label-sm text-label-sm text-on-surface uppercase tracking-widest">Opsi Lanjutan</span>
+<span class="material-symbols-outlined text-outline transition-transform duration-300 peer-checked:rotate-180">expand_more</span>
+</label>
+<!-- Collapsible Content -->
+<div class="hidden peer-checked:block border-t border-outline-variant/50 p-6 bg-white/50 space-y-8">
+<div class="text-sm text-on-surface-variant italic border-l-2 border-secondary-fixed-dim pl-3 py-1 mb-6">
+                            Nilai optimal berbasis riset untuk sintesis abstraktif telah dikonfigurasi sebelumnya. Menyesuaikan nilai ini memerlukan pemahaman tentang algoritma MMR (Maximal Marginal Relevance).
+                        </div>
+<!-- Compression Rate Slider -->
+<div class="space-y-4">
+<div class="flex justify-between items-end">
+<label class="block font-label-sm text-label-sm text-on-surface-variant uppercase">Tingkat Kompresi</label>
+<span class="font-label-sm text-label-sm text-primary-container">30%</span>
+</div>
+<input class="w-full" max="50" min="20" step="5" type="range" value="30"/>
+<div class="flex justify-between text-xs text-outline font-label-sm">
+<span>20% (Padat)</span>
+<span>50% (Ringan)</span>
+</div>
+</div>
+<!-- MMR Lambda Slider -->
+<div class="space-y-4">
+<div class="flex justify-between items-end">
+<label class="block font-label-sm text-label-sm text-on-surface-variant uppercase">Lambda MMR</label>
+<span class="font-label-sm text-label-sm text-primary-container">0.7</span>
+</div>
+<input class="w-full" max="0.9" min="0.1" step="0.1" type="range" value="0.7"/>
+<div class="flex justify-between text-xs text-outline font-label-sm">
+<span>0.1 (Keberagaman)</span>
+<span>0.9 (Relevansi)</span>
+</div>
+</div>
+</div>
+</div>
+<!-- Submit Action -->
+<div class="pt-8">
+<button class="w-full bg-primary-container text-on-primary py-4 px-6 rounded-DEFAULT font-label-sm text-label-sm uppercase tracking-widest hover:bg-primary transition-colors flex items-center justify-center gap-2 group" type="button">
+                        MULAI MERINGKAS
+                        <span class="material-symbols-outlined text-lg group-hover:translate-x-1 transition-transform">arrow_forward</span>
+</button>
+</div>
+</form>
+</div>
+</main>
+<!-- Footer -->
+<footer class="w-full py-16 border-t border-stone-200 dark:border-stone-800 bg-[#FAF9F6] dark:bg-stone-950 flat">
+<div class="flex flex-col md:flex-row justify-between items-center px-10 max-w-7xl mx-auto gap-8">
+<div class="text-xl font-bold text-emerald-900 dark:text-emerald-50 font-serif text-sm">Sintesa Daily</div>
+<div class="text-stone-600 dark:text-stone-400 uppercase tracking-tighter text-xs font-serif text-sm">© 2024 Sintesa Daily. Kecerdasan Terdestilasi.</div>
+<div class="flex gap-6">
+<a class="text-stone-600 dark:text-stone-400 uppercase tracking-tighter text-xs hover:text-emerald-800 dark:hover:text-emerald-200 underline-offset-4 hover:underline transition-all duration-500 ease-in-out font-serif text-sm" href="#">Kebijakan Privasi</a>
+<a class="text-stone-600 dark:text-stone-400 uppercase tracking-tighter text-xs hover:text-emerald-800 dark:hover:text-emerald-200 underline-offset-4 hover:underline transition-all duration-500 ease-in-out font-serif text-sm" href="#">Ketentuan Layanan</a>
+<a class="text-stone-600 dark:text-stone-400 uppercase tracking-tighter text-xs hover:text-emerald-800 dark:hover:text-emerald-200 underline-offset-4 hover:underline transition-all duration-500 ease-in-out font-serif text-sm" href="#">Arsip</a>
+<a class="text-stone-600 dark:text-stone-400 uppercase tracking-tighter text-xs hover:text-emerald-800 dark:hover:text-emerald-200 underline-offset-4 hover:underline transition-all duration-500 ease-in-out font-serif text-sm" href="#">Tentang</a>
+</div>
+</div>
+</footer>
+</body></html>

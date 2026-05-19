@@ -1,0 +1,261 @@
+<!DOCTYPE html>
+
+<html lang="id"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Hasil Klaster - Berinkin</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com" rel="preconnect"/>
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&amp;family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;0,6..72,600;1,6..72,400&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "on-surface-variant": "#404944",
+                        "outline-variant": "#bfc9c3",
+                        "inverse-on-surface": "#f2f1ee",
+                        "surface": "#faf9f6",
+                        "secondary-fixed-dim": "#e9c349",
+                        "on-surface": "#1a1c1a",
+                        "primary": "#003527",
+                        "on-error": "#ffffff",
+                        "surface-bright": "#faf9f6",
+                        "background": "#faf9f6",
+                        "tertiary-fixed": "#c8ebca",
+                        "on-tertiary-container": "#99ba9b",
+                        "inverse-primary": "#95d3ba",
+                        "on-tertiary-fixed": "#03210c",
+                        "surface-container": "#efeeeb",
+                        "on-primary-fixed-variant": "#0b513d",
+                        "on-secondary-container": "#745c00",
+                        "tertiary": "#17341e",
+                        "surface-container-low": "#f4f3f1",
+                        "surface-variant": "#e3e2e0",
+                        "on-background": "#1a1c1a",
+                        "error": "#ba1a1a",
+                        "secondary-container": "#fed65b",
+                        "on-primary": "#ffffff",
+                        "tertiary-container": "#2d4b33",
+                        "surface-container-lowest": "#ffffff",
+                        "outline": "#707974",
+                        "on-secondary-fixed-variant": "#574500",
+                        "on-secondary": "#ffffff",
+                        "on-tertiary": "#ffffff",
+                        "on-error-container": "#93000a",
+                        "tertiary-fixed-dim": "#adcfaf",
+                        "primary-container": "#064e3b",
+                        "surface-dim": "#dbdad7",
+                        "surface-container-highest": "#e3e2e0",
+                        "primary-fixed": "#b0f0d6",
+                        "on-primary-fixed": "#002117",
+                        "surface-tint": "#2b6954",
+                        "error-container": "#ffdad6",
+                        "on-tertiary-fixed-variant": "#304d35",
+                        "inverse-surface": "#2f312f",
+                        "on-secondary-fixed": "#241a00",
+                        "surface-container-high": "#e9e8e5",
+                        "primary-fixed-dim": "#95d3ba",
+                        "secondary-fixed": "#ffe088",
+                        "on-primary-container": "#80bea6",
+                        "secondary": "#735c00"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.125rem",
+                        "lg": "0.25rem",
+                        "xl": "0.5rem",
+                        "full": "0.75rem"
+                    },
+                    "spacing": {
+                        "unit": "4px",
+                        "container-max": "1200px",
+                        "margin": "40px",
+                        "gutter": "24px"
+                    },
+                    "fontFamily": {
+                        "body-md": ["Inter"],
+                        "display-xl": ["Newsreader"],
+                        "body-lg": ["Inter"],
+                        "label-sm": ["Inter"],
+                        "headline-md": ["Newsreader"],
+                        "headline-lg": ["Newsreader"]
+                    },
+                    "fontSize": {
+                        "body-md": ["16px", { "lineHeight": "1.5", "letterSpacing": "0.01em", "fontWeight": "400" }],
+                        "display-xl": ["48px", { "lineHeight": "1.1", "letterSpacing": "-0.02em", "fontWeight": "600" }],
+                        "body-lg": ["18px", { "lineHeight": "1.6", "letterSpacing": "0.01em", "fontWeight": "300" }],
+                        "label-sm": ["12px", { "lineHeight": "1", "letterSpacing": "0.1em", "fontWeight": "600" }],
+                        "headline-md": ["24px", { "lineHeight": "1.3", "fontWeight": "500" }],
+                        "headline-lg": ["32px", { "lineHeight": "1.2", "letterSpacing": "-0.01em", "fontWeight": "500" }]
+                    },
+                    "backgroundImage": {
+                        "dot-pattern": "radial-gradient(#d4d4d4 1px, transparent 1px)"
+                    }
+                }
+            }
+        }
+    </script>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        .material-symbols-outlined.filled {
+            font-variation-settings: 'FILL' 1;
+        }
+        .bg-dot-pattern {
+            background-size: 20px 20px;
+        }
+        
+        /* Network Node Corners */
+        .node-corners {
+            position: relative;
+        }
+        .node-corners::before, .node-corners::after {
+            content: '';
+            position: absolute;
+            width: 4px;
+            height: 4px;
+            background-color: theme('colors.primary-container');
+            z-index: 10;
+        }
+        .node-corners::before {
+            top: -2px;
+            left: -2px;
+            box-shadow: calc(100% + 4px) 0 0 0 theme('colors.primary-container');
+        }
+        .node-corners::after {
+            bottom: -2px;
+            left: -2px;
+            box-shadow: calc(100% + 4px) 0 0 0 theme('colors.primary-container');
+        }
+        /* Fix for absolute positioning inside the card */
+        .node-container > span {
+            position: absolute;
+            width: 4px; height: 4px;
+            background-color: theme('colors.primary-container');
+        }
+        .node-tl { top: -2px; left: -2px; }
+        .node-tr { top: -2px; right: -2px; }
+        .node-bl { bottom: -2px; left: -2px; }
+        .node-br { bottom: -2px; right: -2px; }
+    </style>
+</head>
+<body class="bg-surface bg-dot-pattern min-h-screen font-body-md text-on-surface antialiased flex flex-col">
+<!-- TopAppBar -->
+<header class="flex justify-between items-center px-10 py-4 w-full sticky top-0 z-50 bg-[#FAF9F6]/80 dark:bg-stone-950/80 backdrop-blur-md docked full-width border-b-[0.5px] border-stone-300 dark:border-stone-800">
+<div class="font-newsreader font-bold text-2xl text-[#064E3B] dark:text-emerald-500 tracking-tight">
+            Berinkin
+        </div>
+<nav class="hidden md:flex gap-8">
+<a class="font-newsreader text-lg text-stone-500 dark:text-stone-400 hover:text-[#064E3B] transition-colors hover:text-[#064E3B] dark:hover:text-emerald-400 transition-all scale-95 active:opacity-80 transition-transform" href="#">Beranda</a>
+<a class="font-newsreader text-lg text-stone-500 dark:text-stone-400 hover:text-[#064E3B] transition-colors hover:text-[#064E3B] dark:hover:text-emerald-400 transition-all scale-95 active:opacity-80 transition-transform" href="#">Peringkas</a>
+<a class="font-newsreader text-lg text-[#064E3B] dark:text-emerald-400 border-b border-[#064E3B] font-medium hover:text-[#064E3B] dark:hover:text-emerald-400 transition-all scale-95 active:opacity-80 transition-transform" href="#">Hasil</a>
+</nav>
+<div class="flex items-center gap-4">
+<button class="text-[#064E3B] dark:text-emerald-500 hover:text-[#064E3B] dark:hover:text-emerald-400 transition-all scale-95 active:opacity-80 transition-transform">
+<span class="material-symbols-outlined" data-icon="account_circle">account_circle</span>
+</button>
+</div>
+</header>
+<!-- Main Content -->
+<main class="flex-grow w-full max-w-container-max mx-auto px-margin py-16 flex flex-col gap-12">
+<!-- Header Section -->
+<section class="flex flex-col gap-6 border-b-[0.5px] border-outline-variant pb-8">
+<h1 class="font-display-xl text-display-xl text-primary-container">Hasil Klasterisasi</h1>
+<p class="font-body-lg text-body-lg text-on-surface-variant max-w-2xl">
+                Tinjauan komprehensif dari berbagai sumber informasi yang dikurasi dan diklasterisasi berdasarkan topik relevan.
+            </p>
+</section>
+<!-- Filters (Chips) -->
+<section class="flex flex-wrap gap-3">
+<button class="px-4 py-2 border-[0.5px] border-primary-container bg-primary-container text-surface font-label-sm text-label-sm uppercase rounded-full transition-colors">Semua Topik</button>
+<button class="px-4 py-2 border-[0.5px] border-outline-variant text-on-surface-variant font-label-sm text-label-sm uppercase rounded-full hover:border-primary-container hover:text-primary-container transition-colors">Bisnis</button>
+<button class="px-4 py-2 border-[0.5px] border-outline-variant text-on-surface-variant font-label-sm text-label-sm uppercase rounded-full hover:border-primary-container hover:text-primary-container transition-colors">Teknologi</button>
+<button class="px-4 py-2 border-[0.5px] border-outline-variant text-on-surface-variant font-label-sm text-label-sm uppercase rounded-full hover:border-primary-container hover:text-primary-container transition-colors">Politik Global</button>
+<button class="px-4 py-2 border-[0.5px] border-outline-variant text-on-surface-variant font-label-sm text-label-sm uppercase rounded-full hover:border-primary-container hover:text-primary-container transition-colors">Lingkungan</button>
+</section>
+<!-- Cards Grid -->
+<section class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-gutter">
+<!-- Card 1 -->
+<a class="group relative bg-white/80 backdrop-blur-[12px] border-[0.5px] border-outline-variant p-8 flex flex-col gap-6 hover:border-primary-container transition-colors node-container cursor-pointer block" href="#">
+<span class="node-tl"></span><span class="node-tr"></span><span class="node-bl"></span><span class="node-br"></span>
+<div class="flex justify-between items-center border-l-2 border-primary-container pl-3">
+<span class="font-label-sm text-label-sm text-on-surface-variant uppercase tracking-widest">BISNIS</span>
+<div class="flex items-center gap-1 text-outline">
+<span class="material-symbols-outlined text-[16px]" data-icon="article">article</span>
+<span class="font-label-sm text-label-sm">24 SUMBER</span>
+</div>
+</div>
+<div class="flex flex-col gap-3">
+<h2 class="font-headline-md text-headline-md text-on-surface group-hover:text-primary-container transition-colors">Dampak Kebijakan Suku Bunga Global terhadap Pasar Berkembang</h2>
+<p class="font-body-md text-body-md text-on-surface-variant line-clamp-3">
+                        Analisis komprehensif mengenai bagaimana bank sentral utama dunia mempengaruhi stabilitas ekonomi dan arus modal di negara-negara berkembang pada kuartal ini.
+                    </p>
+</div>
+<div class="mt-auto pt-4 border-t-[0.5px] border-surface-variant flex items-center justify-between opacity-0 group-hover:opacity-100 transition-opacity">
+<span class="font-label-sm text-label-sm text-primary-container uppercase">Baca Ringkasan</span>
+<span class="material-symbols-outlined text-primary-container" data-icon="arrow_forward">arrow_forward</span>
+</div>
+</a>
+<!-- Card 2 -->
+<a class="group relative bg-white/80 backdrop-blur-[12px] border-[0.5px] border-outline-variant p-8 flex flex-col gap-6 hover:border-primary-container transition-colors node-container cursor-pointer block" href="#">
+<span class="node-tl"></span><span class="node-tr"></span><span class="node-bl"></span><span class="node-br"></span>
+<div class="flex justify-between items-center border-l-2 border-primary-container pl-3">
+<span class="font-label-sm text-label-sm text-on-surface-variant uppercase tracking-widest">TEKNOLOGI</span>
+<div class="flex items-center gap-1 text-outline">
+<span class="material-symbols-outlined text-[16px]" data-icon="article">article</span>
+<span class="font-label-sm text-label-sm">18 SUMBER</span>
+</div>
+</div>
+<div class="flex flex-col gap-3">
+<h2 class="font-headline-md text-headline-md text-on-surface group-hover:text-primary-container transition-colors">Evolusi Regulasi Kecerdasan Buatan di Eropa</h2>
+<p class="font-body-md text-body-md text-on-surface-variant line-clamp-3">
+                        Perkembangan terbaru dari rancangan undang-undang AI Act dan implikasinya terhadap perusahaan teknologi multinasional yang beroperasi di wilayah Uni Eropa.
+                    </p>
+</div>
+<div class="mt-auto pt-4 border-t-[0.5px] border-surface-variant flex items-center justify-between opacity-0 group-hover:opacity-100 transition-opacity">
+<span class="font-label-sm text-label-sm text-primary-container uppercase">Baca Ringkasan</span>
+<span class="material-symbols-outlined text-primary-container" data-icon="arrow_forward">arrow_forward</span>
+</div>
+</a>
+<!-- Card 3 -->
+<a class="group relative bg-white/80 backdrop-blur-[12px] border-[0.5px] border-outline-variant p-8 flex flex-col gap-6 hover:border-primary-container transition-colors node-container cursor-pointer block" href="#">
+<span class="node-tl"></span><span class="node-tr"></span><span class="node-bl"></span><span class="node-br"></span>
+<div class="flex justify-between items-center border-l-2 border-primary-container pl-3">
+<span class="font-label-sm text-label-sm text-on-surface-variant uppercase tracking-widest">LINGKUNGAN</span>
+<div class="flex items-center gap-1 text-outline">
+<span class="material-symbols-outlined text-[16px]" data-icon="article">article</span>
+<span class="font-label-sm text-label-sm">32 SUMBER</span>
+</div>
+</div>
+<div class="flex flex-col gap-3">
+<h2 class="font-headline-md text-headline-md text-on-surface group-hover:text-primary-container transition-colors">Transisi Energi Terbarukan: Tantangan Infrastruktur</h2>
+<p class="font-body-md text-body-md text-on-surface-variant line-clamp-3">
+                        Hambatan logistik dan finansial dalam membangun jaringan listrik modern (smart grid) untuk mengakomodasi peningkatan kapasitas tenaga surya dan angin.
+                    </p>
+</div>
+<div class="mt-auto pt-4 border-t-[0.5px] border-surface-variant flex items-center justify-between opacity-0 group-hover:opacity-100 transition-opacity">
+<span class="font-label-sm text-label-sm text-primary-container uppercase">Baca Ringkasan</span>
+<span class="material-symbols-outlined text-primary-container" data-icon="arrow_forward">arrow_forward</span>
+</div>
+</a>
+</section>
+</main>
+<!-- Footer -->
+<footer class="flex flex-col md:flex-row justify-between items-center px-10 py-8 max-w-7xl mx-auto w-full border-t-[0.5px] mt-20 border-stone-200 dark:border-stone-800 bg-[#FAF9F6] dark:bg-stone-950">
+<div class="font-newsreader text-sm uppercase tracking-widest text-[#064E3B] dark:text-emerald-500">
+            © 2024 Berinkin. Distilling the convergence of information.
+        </div>
+<div class="font-newsreader italic text-stone-400">
+            Berinkin
+        </div>
+<div class="flex gap-6 mt-4 md:mt-0">
+<a class="font-newsreader text-sm uppercase tracking-widest text-stone-400 hover:text-[#064E3B] hover:text-[#064E3B] dark:hover:text-emerald-400 duration-300 opacity-100 hover:opacity-80 transition-opacity" href="#">Kebijakan Privasi</a>
+<a class="font-newsreader text-sm uppercase tracking-widest text-stone-400 hover:text-[#064E3B] hover:text-[#064E3B] dark:hover:text-emerald-400 duration-300 opacity-100 hover:opacity-80 transition-opacity" href="#">Kontak</a>
+</div>
+</footer>
+</body></html>
