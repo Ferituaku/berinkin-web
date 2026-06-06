@@ -92,7 +92,14 @@ export default function Home() {
               </p>
             </div>
             <div className="relative h-64 md:h-full min-h-[300px] border-[0.5px] border-outline-variant overflow-hidden bg-surface-container-low">
-              <img alt="Abstract depiction of summarization" className="w-full h-full object-cover mix-blend-luminosity opacity-80" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDGHNRk82u_VZeYocserLt6qeQoWuKBf7tYIw_bPFMpgJufUUn4ZY8e5NU6RWQI3EH-jyCgZeB1BknXDhuzHIR_GNS4U8J_WfdIrPVBOwC4HjdD4ks9xXT4BRJOTwkJy8T1nAVV94piVfVuks9QcXNxrSNdUe5HtaHbFGW7FbNLsVUftPsCCT8Y-SH41w3Hak2uMHpcenNNI-xnP5w17j4WHfVUP9UMM4bKh_9Ox0jy1yX8427j5N9Q11zuZaUzypWcZFdCRBNhM18"/>
+              <video
+                src="/tree-video.mp4"
+                autoPlay
+                loop
+                muted
+                playsInline
+                className="w-full h-full object-cover mix-blend-luminosity opacity-80"
+              />
               <div className="absolute inset-0 bg-gradient-to-t from-surface to-transparent opacity-50"></div>
             </div>
           </div>
@@ -119,10 +126,8 @@ export default function Home() {
               <h3 className="font-[family-name:var(--font-newsreader)] text-[24px] leading-[1.3] text-on-surface mb-3 font-medium">Pengambilan Berita</h3>
               <p className="font-[family-name:var(--font-inter)] text-[16px] leading-[1.5] text-on-surface-variant">Ekstraksi sistematis data mentah dan terfragmentasi dari portal resmi di seluruh jaringan.</p>
             </div>
-            <div className="hidden md:flex md:w-5/12 pl-12 items-center justify-start">
-              <div className="w-full h-32 border-[0.5px] border-outline-variant bg-surface/50 backdrop-blur-sm relative flex items-center justify-center">
-                <span className="material-symbols-outlined text-[40px] text-primary opacity-80">travel_explore</span>
-              </div>
+            <div className="hidden md:flex md:w-5/12 items-center justify-center">
+              <span className="material-symbols-outlined text-primary opacity-80" style={{ fontSize: '144px' }}>travel_explore</span>
             </div>
           </motion.div>
 
@@ -131,10 +136,8 @@ export default function Home() {
             <div className="absolute left-6 md:left-1/2 w-4 h-4 bg-background border-[0.5px] border-primary rotate-45 -translate-x-1/2 mt-6 md:mt-0 flex items-center justify-center z-10">
               <div className="w-1.5 h-1.5 bg-primary group-hover:bg-primary-container transition-colors"></div>
             </div>
-            <div className="hidden md:flex md:w-5/12 pr-12 items-center justify-end">
-              <div className="w-full h-32 border-[0.5px] border-outline-variant bg-surface/50 backdrop-blur-sm relative flex items-center justify-center">
-                <span className="material-symbols-outlined text-[40px] text-primary opacity-80">hub</span>
-              </div>
+            <div className="hidden md:flex md:w-5/12 items-center justify-center">
+              <span className="material-symbols-outlined text-primary opacity-80" style={{ fontSize: '144px' }}>hub</span>
             </div>
             <div className="w-full md:w-5/12 pl-16 md:pl-12 text-left">
               <span className="font-[family-name:var(--font-inter)] text-[12px] text-outline mb-2 block font-semibold tracking-widest">FASE 02</span>
@@ -153,10 +156,8 @@ export default function Home() {
               <h3 className="font-[family-name:var(--font-newsreader)] text-[24px] leading-[1.3] text-on-surface mb-3 font-medium">Peringkasan BERT &amp; MMR</h3>
               <p className="font-[family-name:var(--font-inter)] text-[16px] leading-[1.5] text-on-surface-variant">Penyematan semantik mendalam dipadukan dengan Maximal Marginal Relevance untuk mengekstrak informasi yang paling menonjol dan tidak berlebihan.</p>
             </div>
-            <div className="hidden md:flex md:w-5/12 pl-12 items-center justify-start">
-              <div className="w-full h-32 border-[0.5px] border-outline-variant bg-surface/50 backdrop-blur-sm relative flex items-center justify-center">
-                <span className="material-symbols-outlined text-[40px] text-primary opacity-80">compress</span>
-              </div>
+            <div className="hidden md:flex md:w-5/12 items-center justify-center">
+              <span className="material-symbols-outlined text-primary opacity-80" style={{ fontSize: '144px' }}>compress</span>
             </div>
           </motion.div>
 
@@ -165,18 +166,12 @@ export default function Home() {
             <div className="absolute left-6 md:left-1/2 w-4 h-4 bg-background border-[0.5px] border-primary rotate-45 -translate-x-1/2 mt-6 md:mt-0 flex items-center justify-center z-10">
               <div className="w-2 h-2 bg-primary group-hover:bg-primary-container transition-colors"></div>
             </div>
-            <div className="hidden md:flex md:w-5/12 pr-12 items-center justify-end">
-              <div className="w-full h-32 bg-surface border-[0.5px] border-primary relative flex items-center justify-center">
-                <div className="absolute -top-[2px] -left-[2px] w-[4px] h-[4px] bg-primary"></div>
-                <div className="absolute -top-[2px] -right-[2px] w-[4px] h-[4px] bg-primary"></div>
-                <div className="absolute -bottom-[2px] -left-[2px] w-[4px] h-[4px] bg-primary"></div>
-                <div className="absolute -bottom-[2px] -right-[2px] w-[4px] h-[4px] bg-primary"></div>
-                <div className="flex flex-col items-center gap-2">
-                  <span className="material-symbols-outlined text-[40px] text-primary">task_alt</span>
-                  <span className="text-primary font-[family-name:var(--font-newsreader)] text-[24px] font-medium">
-                    Peringkasan
-                  </span>
-                </div>
+            <div className="hidden md:flex md:w-5/12 items-center justify-center">
+              <div className="flex flex-col items-center gap-2">
+                <span className="material-symbols-outlined text-primary" style={{ fontSize: '144px' }}>task_alt</span>
+                <span className="text-primary font-[family-name:var(--font-newsreader)] text-[24px] font-medium">
+                  Peringkasan
+                </span>
               </div>
             </div>
             <div className="w-full md:w-5/12 pl-16 md:pl-12 text-left">
