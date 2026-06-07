@@ -74,7 +74,7 @@ export default function DetailHasil() {
         {/* Article Body */}
         <div className="mb-16 max-w-[768px]">
           <div className="flex flex-col gap-6">
-            {(clusterData.summary.match(/[^\.!\?]+[\.!\?]+/g) || [clusterData.summary]).reduce((result: string[], item: string, index: number) => {
+            {(clusterData.summary.match(/(?:[^\.!\?]+|\.(?=\d)|(?<=\b(?:Rp|Jl|Jln|No|Dr|dr|Prof|Bpk|Ibu|dll|dsb|dkk|pt|PT|a\.n|st|dKk))\.)+(?:[\.!\?]+|$)/gi) || [clusterData.summary]).reduce((result: string[], item: string, index: number) => {
               const chunkIndex = Math.floor(index / 3);
               if (!result[chunkIndex]) {
                 result[chunkIndex] = '';

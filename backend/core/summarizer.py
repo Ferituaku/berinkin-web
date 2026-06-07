@@ -31,6 +31,13 @@ class TextPreprocessor:
         text = re.sub(r'(\d)([a-zA-Z])', r'\1 \2', text)
         text = text.encode('ascii', 'ignore').decode('ascii')
 
+        # Clean currency spacing issues (e.g. Rp 9. 807 -> Rp 9.807)
+        while True:
+            new_text = re.sub(r'(Rp\s*\d+(?:\.\d+)*)\.\s+(\d+)', r'\1.\2', text, flags=re.IGNORECASE)
+            if new_text == text:
+                break
+            text = new_text
+
         return re.sub(r'\s+', ' ', text).strip()
 
     def case_folding_and_remove_artifacts(self, text: str) -> str:
