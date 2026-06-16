@@ -203,9 +203,10 @@ def summarize_pipeline_generator(articles, compression_rate=0.3, lambda_param=0.
         sent_vecs = embedder.get_embeddings(calc_texts)
         query_vec = np.mean(sent_vecs, axis=0)
         
-        # Calculate compression based on average length of a single article, not combined
-        avg_sents_per_doc = len(all_data) / max(1, len(docs))
-        jumlah_terkompresi = max(2, int(avg_sents_per_doc * (compression_rate / 100.0)))
+        # Calculate compression based on total sentences in the cluster (original pipeline)
+        rate = compression_rate / 100.0 if compression_rate > 1.0 else compression_rate
+        total_sentences_input = len(all_data)
+        jumlah_terkompresi = max(2, int(total_sentences_input * rate))
         
         selected_data = mmr.select(all_data, sent_vecs, query_vec, n=jumlah_terkompresi)
         

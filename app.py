@@ -82,9 +82,7 @@ def _render_card_grid(clusters, mode, card_type="multi"):
             action_txt   = "Baca Ringkasan"
             action_col   = "#064e3b"
             opacity      = "1"
-            corner_nodes = """
-                <span class="cn tl"></span><span class="cn tr"></span>
-                <span class="cn bl"></span><span class="cn br"></span>"""
+            corner_nodes = '<span class="cn tl"></span><span class="cn tr"></span><span class="cn bl"></span><span class="cn br"></span>'
             badges_extra = (
                 f'<span class="badge-cat">{category}</span>' if category else ''
             )
@@ -127,7 +125,8 @@ def _render_card_grid(clusters, mode, card_type="multi"):
 {''.join(cards)}
 </div>
 """
-    st.markdown(grid_html, unsafe_allow_html=True)
+    cleaned_html = "\n".join([line.strip() for line in grid_html.split("\n") if line.strip()])
+    st.markdown(cleaned_html, unsafe_allow_html=True)
 
 def split_summary_into_paragraphs(summary_text, sentences_per_paragraph=3):
     """Splits summary text into paragraphs of N sentences each.
@@ -968,7 +967,8 @@ if current_page == "home":
         </div>
     </div>
     """
-    st.markdown(textwrap.dedent(pipeline_html), unsafe_allow_html=True)
+    cleaned_pipeline_html = "\n".join([line.strip() for line in pipeline_html.split("\n") if line.strip()])
+    st.markdown(cleaned_pipeline_html, unsafe_allow_html=True)
     
     # Footer
     st.markdown("<br><br><br><hr style='border-color: #bfc9c3;'><br>", unsafe_allow_html=True)
