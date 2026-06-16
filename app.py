@@ -39,6 +39,17 @@ try:
 except Exception as e:
     st.warning(f"Could not initialize database: {e}")
 
+# Download NLTK data needed for sentence tokenization (runs once, cached by Streamlit Cloud)
+try:
+    import nltk
+    nltk.download('punkt', quiet=True)
+    nltk.download('punkt_tab', quiet=True)
+    nltk.download('stopwords', quiet=True)
+except Exception:
+    pass
+
+import html as _html  # for escaping user-generated text safely in HTML templates
+
 # --- Helper Functions ---
 def get_base64_image(image_path):
     """Encodes a local image to base64 for embedding in HTML."""
@@ -48,25 +59,41 @@ def get_base64_image(image_path):
     return ""
 
 def split_summary_into_paragraphs(summary_text, sentences_per_paragraph=3):
-    """Splits summary text into paragraphs of N sentences each, ignoring common abbreviations."""
-    sentence_pattern = re.compile(
-        r'(?:[^\.!\?]+|\.(?=\d)|(?<=.b(?:Rp|Jl|Jln|No|Dr|dr|Prof|Bpk|Ibu|dll|dsb|dkk|pt|PT|a\.n|st|dKk))\.)+(?:[\.!\?]+|$)',
-        re.IGNORECASE
-    )
-    sentences = sentence_pattern.findall(summary_text)
+    """Splits summary text into paragraphs of N sentences each.
+    Uses NLTK punkt tokenizer if available, falls back to simple regex.
+    """
+    if not summary_text or not summary_text.strip():
+        return [summary_text or ""]
+
+    # Try NLTK punkt tokenizer first (most robust for Indonesian)
+    try:
+        import nltk
+        try:
+            sentences = nltk.tokenize.sent_tokenize(summary_text, language='indonesian')
+        except Exception:
+            # Fall back to English tokenizer
+            sentences = nltk.tokenize.sent_tokenize(summary_text)
+    except Exception:
+        # Simple fallback: split on . ! ? followed by space + capital letter
+        import re as _re
+        raw = _re.split(r'(?<=[.!?])\s+(?=[A-Z"(])', summary_text)
+        sentences = [s.strip() for s in raw if s.strip()]
+
     if not sentences:
         return [summary_text]
-    
+
     paragraphs = []
     current_paragraph = []
     for idx, sentence in enumerate(sentences):
-        current_paragraph.append(sentence.strip())
-        if (idx + 1) % sentences_per_paragraph == 0:
+        stripped = sentence.strip()
+        if stripped:
+            current_paragraph.append(stripped)
+        if len(current_paragraph) >= sentences_per_paragraph:
             paragraphs.append(" ".join(current_paragraph))
             current_paragraph = []
     if current_paragraph:
         paragraphs.append(" ".join(current_paragraph))
-    return paragraphs
+    return paragraphs if paragraphs else [summary_text]
 
 # Cache file functions for local cluster results (similar to localStorage in React)
 CACHE_FILE = "berinkin_clusters_cache.json"
@@ -939,44 +966,49 @@ elif current_page == "hasil":
                         cluster_key = cluster.get('cluster_id', str(idx))
                         
                         with row_cols[col_idx]:
-                            # Render card with an HTML anchor that passes detail page arguments via query parameters
-                            card_html = f"""
-                            <a href="?page=detail&id={cluster_key}&mode={'db' if run_mode != 'Hasil Ringkasan Terkini' else 'cache'}" target="_self" class="cluster-card">
-                                <div class="corner-node top-left"></div>
-                                <div class="corner-node top-right"></div>
-                                <div class="corner-node bottom-left"></div>
-                                <div class="corner-node bottom-right"></div>
-                                
-                                <div style="display: flex; justify-content: space-between; align-items: center; border-left: 2px solid #064e3b; padding-left: 12px; margin-bottom: 8px;">
-                                    <span style="font-size: 11px; font-weight: 600; color: #404944; letter-spacing: 0.1em; text-transform: uppercase;">KLASTER #{idx + 1}</span>
-                                    <div style="display: flex; align-items: center; gap: 4px; color: #707974;">
-                                        <span class="material-symbols-outlined" style="font-size: 16px;">article</span>
-                                        <span style="font-size: 11px; font-weight: 600; letter-spacing: 0.1em;">{cluster['article_count']} SUMBER</span>
-                                    </div>
-                                </div>
-                                
-                                <div>
-                                    <h3 style="font-size: 24px; line-height: 1.3; font-family: 'Newsreader', serif; margin-bottom: 12px; color: #003527; font-weight: 500;">
-                                        {cluster['topic_title']}
-                                    </h3>
-                                    <div style="display: flex; gap: 8px; margin-bottom: 16px; flex-wrap: wrap;">
-                                        <span style="font-size: 10px; font-weight: 700; background-color: #e3e2e0; color: #404944; padding: 4px 8px; text-transform: uppercase; letter-spacing: 0.05em;">Kompresi: {cluster.get('compression_rate', 30)}%</span>
-                                        <span style="font-size: 10px; font-weight: 700; background-color: #e3e2e0; color: #404944; padding: 4px 8px; text-transform: uppercase; letter-spacing: 0.05em;">Lambda: {cluster.get('lambda_value', 0.7)}</span>
-                                        {f"<span style='font-size: 10px; font-weight: 700; background-color: #95d3ba; color: #002117; padding: 4px 8px; text-transform: uppercase;'>{cluster.get('category','')}</span>" if 'category' in cluster else ''}
-                                    </div>
-                                    <p style="font-size: 15px; line-height: 1.5; color: #404944; display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; margin: 0;">
-                                        {cluster['summary']}
-                                    </p>
-                                </div>
-                                
-                                <div style="margin-top: auto; padding-top: 16px; border-top: 0.5px solid #e3e2e0; display: flex; justify-content: space-between; align-items: center;">
-                                    <span style="font-size: 12px; font-weight: 600; color: #064e3b; letter-spacing: 0.05em; text-transform: uppercase;">Baca Ringkasan</span>
-                                    <span class="material-symbols-outlined" style="color: #064e3b;">arrow_forward</span>
-                                </div>
-                            </a>
-                            """
-                            st.markdown(card_html, unsafe_allow_html=True)
-                            st.markdown("<br>", unsafe_allow_html=True)
+                             # Escape dynamic content to prevent HTML breakage
+                             safe_title = _html.escape(str(cluster.get('topic_title', '')))
+                             safe_summary = _html.escape(str(cluster.get('summary', ''))[:300])
+                             safe_category = _html.escape(str(cluster.get('category', '')))
+                             safe_mode = 'db' if run_mode != 'Hasil Ringkasan Terkini' else 'cache'
+                             # Render card with an HTML anchor that passes detail page arguments via query parameters
+                             card_html = f"""
+                             <a href="?page=detail&id={cluster_key}&mode={safe_mode}" target="_self" class="cluster-card">
+                                 <div class="corner-node top-left"></div>
+                                 <div class="corner-node top-right"></div>
+                                 <div class="corner-node bottom-left"></div>
+                                 <div class="corner-node bottom-right"></div>
+                                 
+                                 <div style="display: flex; justify-content: space-between; align-items: center; border-left: 2px solid #064e3b; padding-left: 12px; margin-bottom: 8px;">
+                                     <span style="font-size: 11px; font-weight: 600; color: #404944; letter-spacing: 0.1em; text-transform: uppercase;">KLASTER #{idx + 1}</span>
+                                     <div style="display: flex; align-items: center; gap: 4px; color: #707974;">
+                                         <span class="material-symbols-outlined" style="font-size: 16px;">article</span>
+                                         <span style="font-size: 11px; font-weight: 600; letter-spacing: 0.1em;">{cluster['article_count']} SUMBER</span>
+                                     </div>
+                                 </div>
+                                 
+                                 <div>
+                                     <h3 style="font-size: 24px; line-height: 1.3; font-family: 'Newsreader', serif; margin-bottom: 12px; color: #003527; font-weight: 500;">
+                                         {safe_title}
+                                     </h3>
+                                     <div style="display: flex; gap: 8px; margin-bottom: 16px; flex-wrap: wrap;">
+                                         <span style="font-size: 10px; font-weight: 700; background-color: #e3e2e0; color: #404944; padding: 4px 8px; text-transform: uppercase; letter-spacing: 0.05em;">Kompresi: {cluster.get('compression_rate', 30)}%</span>
+                                         <span style="font-size: 10px; font-weight: 700; background-color: #e3e2e0; color: #404944; padding: 4px 8px; text-transform: uppercase; letter-spacing: 0.05em;">Lambda: {cluster.get('lambda_value', 0.7)}</span>
+                                         {f"<span style='font-size: 10px; font-weight: 700; background-color: #95d3ba; color: #002117; padding: 4px 8px; text-transform: uppercase;'>{safe_category}</span>" if safe_category else ''}
+                                     </div>
+                                     <p style="font-size: 15px; line-height: 1.5; color: #404944; display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; margin: 0;">
+                                         {safe_summary}
+                                     </p>
+                                 </div>
+                                 
+                                 <div style="margin-top: auto; padding-top: 16px; border-top: 0.5px solid #e3e2e0; display: flex; justify-content: space-between; align-items: center;">
+                                     <span style="font-size: 12px; font-weight: 600; color: #064e3b; letter-spacing: 0.05em; text-transform: uppercase;">Baca Ringkasan</span>
+                                     <span class="material-symbols-outlined" style="color: #064e3b;">arrow_forward</span>
+                                 </div>
+                             </a>
+                             """
+                             st.markdown(card_html, unsafe_allow_html=True)
+                             st.markdown("<br>", unsafe_allow_html=True)
 
         st.markdown("<br><br>", unsafe_allow_html=True)
 
@@ -1001,36 +1033,39 @@ elif current_page == "hasil":
                         cluster_key = cluster.get('cluster_id', str(idx))
                         
                         with row_cols[col_idx]:
-                            card_html = f"""
-                            <a href="?page=detail&id={cluster_key}&mode={'db' if run_mode != 'Hasil Ringkasan Terkini' else 'cache'}" target="_self" class="cluster-card" style="opacity: 0.75;">
-                                <div style="display: flex; justify-content: space-between; align-items: center; border-left: 2px solid #bfc9c3; padding-left: 12px; margin-bottom: 8px;">
-                                    <span style="font-size: 11px; font-weight: 600; color: #707974; letter-spacing: 0.1em; text-transform: uppercase;">BERITA #{idx + 1}</span>
-                                    <div style="display: flex; align-items: center; gap: 4px; color: #707974;">
-                                        <span class="material-symbols-outlined" style="font-size: 16px;">article</span>
-                                        <span style="font-size: 11px; font-weight: 600; letter-spacing: 0.1em;">1 SUMBER</span>
-                                    </div>
-                                </div>
-                                
-                                <div>
-                                    <h3 style="font-size: 24px; line-height: 1.3; font-family: 'Newsreader', serif; margin-bottom: 12px; color: #1a1c1a; font-weight: 500;">
-                                        {cluster['topic_title']}
-                                    </h3>
-                                    <div style="display: flex; gap: 8px; margin-bottom: 16px; flex-wrap: wrap;">
-                                        <span style="font-size: 10px; font-weight: 700; background-color: #ffdad6; color: #ba1a1a; border: 0.5px solid #ffdad6; padding: 4px 8px; text-transform: uppercase; letter-spacing: 0.05em;">Tidak Teringkas</span>
-                                    </div>
-                                    <p style="font-size: 15px; line-height: 1.5; color: #404944; display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; margin: 0;">
-                                        {cluster['summary']}
-                                    </p>
-                                </div>
-                                
-                                <div style="margin-top: auto; padding-top: 16px; border-top: 0.5px solid #e3e2e0; display: flex; justify-content: space-between; align-items: center;">
-                                    <span style="font-size: 12px; font-weight: 600; color: #707974; letter-spacing: 0.05em; text-transform: uppercase;">Lihat Detail</span>
-                                    <span class="material-symbols-outlined" style="color: #707974;">arrow_forward</span>
-                                </div>
-                            </a>
-                            """
-                            st.markdown(card_html, unsafe_allow_html=True)
-                            st.markdown("<br>", unsafe_allow_html=True)
+                             safe_title = _html.escape(str(cluster.get('topic_title', '')))
+                             safe_summary = _html.escape(str(cluster.get('summary', ''))[:300])
+                             safe_mode = 'db' if run_mode != 'Hasil Ringkasan Terkini' else 'cache'
+                             card_html = f"""
+                             <a href="?page=detail&id={cluster_key}&mode={safe_mode}" target="_self" class="cluster-card" style="opacity: 0.75;">
+                                 <div style="display: flex; justify-content: space-between; align-items: center; border-left: 2px solid #bfc9c3; padding-left: 12px; margin-bottom: 8px;">
+                                     <span style="font-size: 11px; font-weight: 600; color: #707974; letter-spacing: 0.1em; text-transform: uppercase;">BERITA #{idx + 1}</span>
+                                     <div style="display: flex; align-items: center; gap: 4px; color: #707974;">
+                                         <span class="material-symbols-outlined" style="font-size: 16px;">article</span>
+                                         <span style="font-size: 11px; font-weight: 600; letter-spacing: 0.1em;">1 SUMBER</span>
+                                     </div>
+                                 </div>
+                                 
+                                 <div>
+                                     <h3 style="font-size: 24px; line-height: 1.3; font-family: 'Newsreader', serif; margin-bottom: 12px; color: #1a1c1a; font-weight: 500;">
+                                         {safe_title}
+                                     </h3>
+                                     <div style="display: flex; gap: 8px; margin-bottom: 16px; flex-wrap: wrap;">
+                                         <span style="font-size: 10px; font-weight: 700; background-color: #ffdad6; color: #ba1a1a; border: 0.5px solid #ffdad6; padding: 4px 8px; text-transform: uppercase; letter-spacing: 0.05em;">Tidak Teringkas</span>
+                                     </div>
+                                     <p style="font-size: 15px; line-height: 1.5; color: #404944; display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; margin: 0;">
+                                         {safe_summary}
+                                     </p>
+                                 </div>
+                                 
+                                 <div style="margin-top: auto; padding-top: 16px; border-top: 0.5px solid #e3e2e0; display: flex; justify-content: space-between; align-items: center;">
+                                     <span style="font-size: 12px; font-weight: 600; color: #707974; letter-spacing: 0.05em; text-transform: uppercase;">Lihat Detail</span>
+                                     <span class="material-symbols-outlined" style="color: #707974;">arrow_forward</span>
+                                 </div>
+                             </a>
+                             """
+                             st.markdown(card_html, unsafe_allow_html=True)
+                             st.markdown("<br>", unsafe_allow_html=True)
 
 # ----------------- 4. DETAIL RINGKASAN TOPiK PAGE -----------------
 elif current_page == "detail":
