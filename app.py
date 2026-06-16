@@ -49,6 +49,7 @@ except Exception:
     pass
 
 import html as _html  # for escaping user-generated text safely in HTML templates
+import textwrap
 
 # --- Helper Functions ---
 def get_base64_image(image_path):
@@ -59,11 +60,9 @@ def get_base64_image(image_path):
     return ""
 
 def _render_card_grid(clusters, mode, card_type="multi"):
-    """Render cluster cards as a CSS-grid iframe (bypasses Streamlit HTML sanitizer).
-
-    Uses st.components.v1.html() so the HTML is rendered inside an iframe with
-    no Streamlit markdown post-processing. Anchor tags use target='_parent' so
-    clicking a card navigates the parent Streamlit page.
+    """Render cluster cards directly as a styled CSS-grid.
+    Uses st.markdown(..., unsafe_allow_html=True) with a grid container and
+    inline elements inside links to prevent Python-Markdown from breaking it.
     """
     import html as _h
     cards = []
@@ -84,8 +83,8 @@ def _render_card_grid(clusters, mode, card_type="multi"):
             action_col   = "#064e3b"
             opacity      = "1"
             corner_nodes = """
-                <div class="cn tl"></div><div class="cn tr"></div>
-                <div class="cn bl"></div><div class="cn br"></div>"""
+                <span class="cn tl"></span><span class="cn tr"></span>
+                <span class="cn bl"></span><span class="cn br"></span>"""
             badges_extra = (
                 f'<span class="badge-cat">{category}</span>' if category else ''
             )
@@ -105,90 +104,30 @@ def _render_card_grid(clusters, mode, card_type="multi"):
             badges       = '<span class="badge-warn">Tidak Teringkas</span>'
 
         cards.append(f"""
-<a class="card" href="?page=detail&id={cluster_key}&mode={mode}"
-   target="_parent" style="opacity:{opacity};">
+<a class="cluster-card" href="?page=detail&id={cluster_key}&mode={mode}"
+   target="_self" style="opacity:{opacity};">
   {corner_nodes}
-  <div class="card-header" style="border-left-color:{border_col};">
+  <span class="card-header" style="border-left-color:{border_col};">
     <span class="label">{label}</span>
-    <span class="src"><span class="mi">article</span>{art_count} SUMBER</span>
-  </div>
-  <div class="card-body">
-    <h3 style="color:{title_col};">{title}</h3>
-    <div class="badges">{badges}</div>
-    <p class="excerpt">{summary}</p>
-  </div>
-  <div class="card-foot" style="color:{action_col};">
+    <span class="src"><span class="material-symbols-outlined" style="font-size: 15px; margin-right: 3px; font-variation-settings: 'FILL' 0;">article</span>{art_count} SUMBER</span>
+  </span>
+  <span class="card-body">
+    <span class="card-title" style="color:{title_col};">{title}</span>
+    <span class="badges">{badges}</span>
+    <span class="excerpt">{summary}</span>
+  </span>
+  <span class="card-foot" style="color:{action_col};">
     <span>{action_txt}</span>
-    <span class="mi">arrow_forward</span>
-  </div>
+    <span class="material-symbols-outlined" style="font-size: 15px;">arrow_forward</span>
+  </span>
 </a>""")
 
-    rows = max(1, (len(clusters) + 2) // 3)
-    card_h = 320  # px per card row
-    iframe_h = rows * card_h + 24
-
-    full_html = f"""<!DOCTYPE html>
-<html>
-<head>
-<meta charset="utf-8">
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Newsreader:opsz,wght@6..72,500;6..72,700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,400,0,0"/>
-<style>
-*{{box-sizing:border-box;margin:0;padding:0;}}
-body{{background:transparent;font-family:'Inter',sans-serif;padding:2px 0;}}
-.grid{{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;}}
-.card{{
-  background:rgba(255,255,255,0.9);
-  border:0.5px solid #bfc9c3;
-  padding:24px;
-  position:relative;
-  display:flex;
-  flex-direction:column;
-  gap:14px;
-  min-height:300px;
-  text-decoration:none;
-  color:#1a1c1a;
-  transition:all 0.25s ease;
-  border-radius:0;
-}}
-.card:hover{{
-  border-color:#064e3b;
-  background:rgba(255,255,255,1);
-  box-shadow:0 8px 24px -4px rgba(0,53,39,0.1);
-  transform:translateY(-2px);
-}}
-.cn{{position:absolute;width:6px;height:6px;background:#064e3b;}}
-.tl{{top:-3px;left:-3px}}.tr{{top:-3px;right:-3px}}
-.bl{{bottom:-3px;left:-3px}}.br{{bottom:-3px;right:-3px}}
-.card-header{{
-  display:flex;justify-content:space-between;align-items:center;
-  border-left:2px solid;padding-left:10px;
-}}
-.label{{font-size:10px;font-weight:700;color:#404944;letter-spacing:.1em;text-transform:uppercase;}}
-.src{{display:flex;align-items:center;gap:3px;font-size:10px;font-weight:700;color:#707974;letter-spacing:.05em;}}
-.mi{{font-family:'Material Symbols Outlined';font-size:15px;font-weight:400;line-height:1;}}
-.card-body{{flex:1;display:flex;flex-direction:column;gap:10px;}}
-h3{{font-family:'Newsreader',serif;font-size:20px;line-height:1.35;font-weight:500;}}
-.badges{{display:flex;gap:6px;flex-wrap:wrap;}}
-.badge{{font-size:9px;font-weight:700;background:#e3e2e0;color:#404944;padding:3px 7px;text-transform:uppercase;letter-spacing:.05em;}}
-.badge-cat{{font-size:9px;font-weight:700;background:#95d3ba;color:#002117;padding:3px 7px;text-transform:uppercase;}}
-.badge-warn{{font-size:9px;font-weight:700;background:#ffdad6;color:#ba1a1a;border:0.5px solid #ffdad6;padding:3px 7px;text-transform:uppercase;}}
-.excerpt{{font-size:13px;line-height:1.55;color:#404944;display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden;}}
-.card-foot{{
-  margin-top:auto;padding-top:14px;border-top:0.5px solid #e3e2e0;
-  display:flex;justify-content:space-between;align-items:center;
-  font-size:11px;font-weight:600;letter-spacing:.05em;text-transform:uppercase;
-}}
-</style>
-</head>
-<body>
-<div class="grid">
+    grid_html = f"""
+<div class="card-grid-container">
 {''.join(cards)}
 </div>
-</body>
-</html>"""
-
-    st.components.v1.html(full_html, height=iframe_h, scrolling=False)
+"""
+    st.markdown(grid_html, unsafe_allow_html=True)
 
 def split_summary_into_paragraphs(summary_text, sentences_per_paragraph=3):
     """Splits summary text into paragraphs of N sentences each.
@@ -465,6 +404,286 @@ def inject_custom_css():
             }
             ::-webkit-scrollbar-thumb {
                 background: #bfc9c3;
+            }
+
+            /* Card Grid and Cluster Cards */
+            .card-grid-container {
+                display: grid;
+                grid-template-columns: repeat(3, 1fr);
+                gap: 24px;
+                width: 100%;
+                margin-top: 16px;
+                margin-bottom: 24px;
+            }
+            @media (max-width: 992px) {
+                .card-grid-container {
+                    grid-template-columns: repeat(2, 1fr);
+                }
+            }
+            @media (max-width: 768px) {
+                .card-grid-container {
+                    grid-template-columns: 1fr;
+                }
+            }
+            .cluster-card {
+                background-color: rgba(255, 255, 255, 0.85);
+                backdrop-filter: blur(12px);
+                border: 0.5px solid #bfc9c3;
+                padding: 24px;
+                position: relative;
+                cursor: pointer;
+                transition: all 0.3s ease;
+                display: flex;
+                flex-direction: column;
+                gap: 16px;
+                height: 100%;
+                min-height: 320px;
+                text-decoration: none !important;
+                color: #1a1c1a !important;
+                box-sizing: border-box;
+            }
+            .cluster-card:hover {
+                border-color: #064e3b;
+                background-color: rgba(255, 255, 255, 0.98);
+                box-shadow: 0 10px 25px -5px rgba(0, 53, 39, 0.08);
+                transform: translateY(-2px);
+            }
+            .cluster-card .cn {
+                position: absolute;
+                width: 6px;
+                height: 6px;
+                background-color: #064e3b;
+            }
+            .cluster-card .tl { top: -3px; left: -3px; }
+            .cluster-card .tr { top: -3px; right: -3px; }
+            .cluster-card .bl { bottom: -3px; left: -3px; }
+            .cluster-card .br { bottom: -3px; right: -3px; }
+            
+            .cluster-card .card-header {
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+                border-left: 2px solid;
+                padding-left: 10px;
+                margin-bottom: 4px;
+            }
+            .cluster-card .label {
+                font-size: 10px;
+                font-weight: 700;
+                color: #404944;
+                letter-spacing: .1em;
+                text-transform: uppercase;
+            }
+            .cluster-card .src {
+                display: flex;
+                align-items: center;
+                gap: 3px;
+                font-size: 10px;
+                font-weight: 700;
+                color: #707974;
+                letter-spacing: .05em;
+            }
+            .cluster-card .card-body {
+                flex: 1;
+                display: flex;
+                flex-direction: column;
+                gap: 10px;
+            }
+            .cluster-card .card-title {
+                font-family: 'Newsreader', serif;
+                font-size: 20px;
+                line-height: 1.35;
+                font-weight: 500;
+                display: block;
+            }
+            .cluster-card .badges {
+                display: flex;
+                gap: 6px;
+                flex-wrap: wrap;
+                margin-top: 2px;
+                margin-bottom: 2px;
+            }
+            .cluster-card .badge {
+                font-size: 9px;
+                font-weight: 700;
+                background-color: #e3e2e0;
+                color: #404944;
+                padding: 3px 7px;
+                text-transform: uppercase;
+                letter-spacing: .05em;
+                display: inline-block;
+            }
+            .cluster-card .badge-cat {
+                font-size: 9px;
+                font-weight: 700;
+                background-color: #95d3ba;
+                color: #002117;
+                padding: 3px 7px;
+                text-transform: uppercase;
+                display: inline-block;
+            }
+            .cluster-card .badge-warn {
+                font-size: 9px;
+                font-weight: 700;
+                background-color: #ffdad6;
+                color: #ba1a1a;
+                border: 0.5px solid #ffdad6;
+                padding: 3px 7px;
+                text-transform: uppercase;
+                display: inline-block;
+            }
+            .cluster-card .excerpt {
+                font-size: 13px;
+                line-height: 1.55;
+                color: #404944;
+                display: -webkit-box;
+                -webkit-line-clamp: 3;
+                -webkit-box-orient: vertical;
+                overflow: hidden;
+            }
+            .cluster-card .card-foot {
+                margin-top: auto;
+                padding-top: 14px;
+                border-top: 0.5px solid #e3e2e0;
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+                font-size: 11px;
+                font-weight: 600;
+                letter-spacing: .05em;
+                text-transform: uppercase;
+            }
+
+            /* Technical Pipeline Timeline Styling */
+            .pipeline-container {
+                position: relative;
+                max-width: 900px;
+                margin: 40px auto;
+                padding: 20px 0;
+            }
+            .pipeline-line {
+                position: absolute;
+                left: 50%;
+                top: 0;
+                bottom: 0;
+                width: 0.5px;
+                background-color: #bfc9c3;
+                transform: translateX(-50%);
+                z-index: 1;
+            }
+            .pipeline-step {
+                position: relative;
+                display: flex;
+                align-items: center;
+                justify-content: space-between;
+                margin-bottom: 80px;
+                width: 100%;
+                z-index: 2;
+            }
+            .pipeline-step.reverse {
+                flex-direction: row-reverse;
+            }
+            .pipeline-node {
+                position: absolute;
+                left: 50%;
+                width: 16px;
+                height: 16px;
+                background-color: #faf9f6;
+                border: 0.5px solid #003527;
+                transform: translate(-50%, -50%) rotate(45deg);
+                top: 50%;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                z-index: 3;
+            }
+            .pipeline-node::after {
+                content: '';
+                width: 6px;
+                height: 6px;
+                background-color: #003527;
+                transition: background-color 0.3s;
+            }
+            .pipeline-step:hover .pipeline-node::after {
+                background-color: #064e3b;
+            }
+            .pipeline-content {
+                width: 42%;
+                box-sizing: border-box;
+            }
+            .pipeline-content.left {
+                text-align: right;
+                padding-right: 40px;
+            }
+            .pipeline-content.right {
+                text-align: left;
+                padding-left: 40px;
+            }
+            .step-num {
+                font-size: 11px;
+                font-weight: 600;
+                color: #707974;
+                letter-spacing: 0.15em;
+                margin-bottom: 8px;
+            }
+            .step-title {
+                font-family: 'Newsreader', serif;
+                font-size: 22px;
+                font-weight: 500;
+                color: #003527;
+                margin-bottom: 12px;
+            }
+            .step-desc {
+                font-size: 14px;
+                line-height: 1.6;
+                color: #404944;
+            }
+            .pipeline-icon {
+                width: 42%;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+            }
+            .pipeline-icon.left {
+                justify-content: flex-end;
+                padding-right: 40px;
+            }
+            .pipeline-icon.right {
+                justify-content: flex-start;
+                padding-left: 40px;
+            }
+            .icon-display {
+                font-size: 80px !important;
+                color: #064e3b;
+                opacity: 0.8;
+            }
+            
+            /* Responsive styling for mobile */
+            @media (max-width: 768px) {
+                .pipeline-line {
+                    left: 20px;
+                    transform: none;
+                }
+                .pipeline-step, .pipeline-step.reverse {
+                    flex-direction: column;
+                    align-items: flex-start;
+                    margin-bottom: 60px;
+                    padding-left: 40px;
+                }
+                .pipeline-node {
+                    left: 20px;
+                    top: 20px;
+                    transform: translate(-50%, -50%) rotate(45deg);
+                }
+                .pipeline-content, .pipeline-content.left, .pipeline-content.right {
+                    width: 100%;
+                    text-align: left;
+                    padding-left: 0;
+                    padding-right: 0;
+                }
+                .pipeline-icon {
+                    display: none;
+                }
             }
         </style>
         """,
@@ -749,7 +968,7 @@ if current_page == "home":
         </div>
     </div>
     """
-    st.markdown(pipeline_html, unsafe_allow_html=True)
+    st.markdown(textwrap.dedent(pipeline_html), unsafe_allow_html=True)
     
     # Footer
     st.markdown("<br><br><br><hr style='border-color: #bfc9c3;'><br>", unsafe_allow_html=True)
