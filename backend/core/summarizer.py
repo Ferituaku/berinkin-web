@@ -80,30 +80,8 @@ class MMRSelector:
         if query.ndim == 1: query = query.reshape(1, -1)
         if embs.ndim == 1: embs = embs.reshape(1, -1)
 
+        # Pure cosine similarity relevance score from SBERT (no heuristics, per research notebook)
         sim_to_query = self._cosine_similarity(embs, query).flatten()
-        
-        # Appyling Heuristics from notebook
-        doc_quote_state = {}
-        for i, item in enumerate(sentences_data):
-            text = item['text'].lower() if isinstance(item, dict) else str(item).lower()
-            doc_id = item.get('doc_id', 'unknown')
-            sent_id = item.get('sent_id', i)
-            if doc_id not in doc_quote_state: doc_quote_state[doc_id] = False
-            was_in_quote = doc_quote_state[doc_id]
-            straight_quotes = text.count('"')
-            has_curly_open = '“' in text
-            has_curly_close = '”' in text
-            
-            multiplier = 1.0
-            is_penalized = was_in_quote or (straight_quotes > 0) or has_curly_open or has_curly_close
-            if is_penalized: multiplier *= 0.70
-            
-            if has_curly_open and not has_curly_close: doc_quote_state[doc_id] = True
-            elif has_curly_close and not has_curly_open: doc_quote_state[doc_id] = False
-            elif straight_quotes % 2 != 0: doc_quote_state[doc_id] = not doc_quote_state[doc_id]
-            
-            if sent_id == 1: multiplier *= 1.3
-            sim_to_query[i] *= multiplier
 
         sel_idx = []
         rem_idx = list(range(len(sentences_data)))
