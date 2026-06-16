@@ -8,7 +8,6 @@ import json
 import base64
 import numpy as np
 
-# Add backend directory to sys.path to allow imports from backend
 backend_path = os.path.join(os.path.dirname(__file__), 'backend')
 if backend_path not in sys.path:
     sys.path.insert(0, backend_path)
@@ -19,27 +18,22 @@ from core.summarizer import SentenceBERTEmbedder
 
 @st.cache_resource
 def get_cached_sbert_model():
-    """Cache the SentenceTransformer model to prevent reloading on every run."""
     return SentenceTransformer("sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2")
 
-# Patch the init of SentenceBERTEmbedder to use the cached model instance
 def patched_init(self, model_name="sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2"):
     self.model = get_cached_sbert_model()
 
 SentenceBERTEmbedder.__init__ = patched_init
 
-# --- Database & Pipeline Imports ---
 from database import init_db, SummaryHistory, SessionLocal
 from core.scraper import scrape_articles_pipeline_generator
 from core.summarizer import summarize_pipeline_generator
 
-# Initialize DB on startup
 try:
     init_db()
 except Exception as e:
     st.warning(f"Could not initialize database: {e}")
 
-# Download NLTK data needed for sentence tokenization (runs once, cached by Streamlit Cloud)
 try:
     import nltk
     nltk.download('punkt', quiet=True)
@@ -48,22 +42,17 @@ try:
 except Exception:
     pass
 
-import html as _html  # for escaping user-generated text safely in HTML templates
+import html as _html 
 import textwrap
 
 # --- Helper Functions ---
 def get_base64_image(image_path):
-    """Encodes a local image to base64 for embedding in HTML."""
     if os.path.exists(image_path):
         with open(image_path, "rb") as img_file:
             return f"data:image/png;base64,{base64.b64encode(img_file.read()).decode()}"
     return ""
 
 def _render_card_grid(clusters, mode, card_type="multi"):
-    """Render cluster cards directly as a styled CSS-grid.
-    Uses st.markdown(..., unsafe_allow_html=True) with a grid container and
-    inline elements inside links to prevent Python-Markdown from breaking it.
-    """
     import html as _h
     cards = []
     for idx, cluster in enumerate(clusters):
@@ -129,22 +118,16 @@ def _render_card_grid(clusters, mode, card_type="multi"):
     st.markdown(cleaned_html, unsafe_allow_html=True)
 
 def split_summary_into_paragraphs(summary_text, sentences_per_paragraph=3):
-    """Splits summary text into paragraphs of N sentences each.
-    Uses NLTK punkt tokenizer if available, falls back to simple regex.
-    """
     if not summary_text or not summary_text.strip():
         return [summary_text or ""]
 
-    # Try NLTK punkt tokenizer first (most robust for Indonesian)
     try:
         import nltk
         try:
             sentences = nltk.tokenize.sent_tokenize(summary_text, language='indonesian')
         except Exception:
-            # Fall back to English tokenizer
             sentences = nltk.tokenize.sent_tokenize(summary_text)
     except Exception:
-        # Simple fallback: split on . ! ? followed by space + capital letter
         import re as _re
         raw = _re.split(r'(?<=[.!?])\s+(?=[A-Z"(])', summary_text)
         sentences = [s.strip() for s in raw if s.strip()]
@@ -165,7 +148,6 @@ def split_summary_into_paragraphs(summary_text, sentences_per_paragraph=3):
         paragraphs.append(" ".join(current_paragraph))
     return paragraphs if paragraphs else [summary_text]
 
-# Cache file functions for local cluster results (similar to localStorage in React)
 CACHE_FILE = "berinkin_clusters_cache.json"
 
 def save_clusters_to_cache(clusters):
@@ -184,7 +166,6 @@ def load_clusters_from_cache():
             pass
     return []
 
-# --- Page Setup & CSS Injection ---
 st.set_page_config(
     page_title="Berinkin - Berita Ringkasan Terkini",
     page_icon="🌿",
@@ -192,14 +173,12 @@ st.set_page_config(
     initial_sidebar_state="collapsed"
 )
 
-# Custom styling representing "Editorial Minimalism"
 def inject_custom_css():
     st.markdown(
         """
         <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Newsreader:ital,opsz,wght@0,6..72,300;0,6..72,400;0,6..72,500;0,6..72,600;0,6..72,700;1,6..72,400&display=swap" rel="stylesheet">
         <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" />
         <style>
-            /* Reset & Core Styling */
             html, body, [data-testid="stAppViewContainer"] {
                 background-color: #faf9f6 !important;
                 color: #1a1c1a !important;
@@ -215,18 +194,15 @@ def inject_custom_css():
                 padding-right: 2rem !important;
             }
             
-            /* Typography */
             h1, h2, h3, .serif-text {
                 font-family: 'Newsreader', serif !important;
                 color: #003527 !important;
                 font-weight: 600 !important;
             }
             
-            /* Hide Streamlit elements */
             #MainMenu {visibility: hidden;}
             footer {visibility: hidden;}
             
-            /* Header Navigation styling */
             .header-nav {
                 position: fixed;
                 top: 0;
@@ -288,7 +264,6 @@ def inject_custom_css():
                 background-color: #003527;
             }
             
-            /* Main Container Padding */
             .main-content {
                 margin-top: 100px;
                 width: 100%;
@@ -297,7 +272,6 @@ def inject_custom_css():
                 margin-right: auto;
             }
             
-            /* Button styles */
             .premium-button {
                 display: inline-flex;
                 align-items: center;
@@ -323,7 +297,6 @@ def inject_custom_css():
                 transform: translateY(-1px);
             }
             
-            /* Cluster Cards Grid */
             .cluster-card {
                 background-color: rgba(255, 255, 255, 0.85);
                 backdrop-filter: blur(12px);
@@ -355,7 +328,6 @@ def inject_custom_css():
             .cluster-card .bottom-left { bottom: -3px; left: -3px; }
             .cluster-card .bottom-right { bottom: -3px; right: -3px; }
             
-            /* Leaf Canvas Iframe Hack */
             iframe[title="streamlit_app.render_falling_leaves"] {
                 position: fixed !important;
                 top: 0 !important;
@@ -367,7 +339,6 @@ def inject_custom_css():
                 border: none !important;
             }
             
-            /* Form container styling */
             .form-container {
                 background-color: rgba(255, 255, 255, 0.8);
                 backdrop-filter: blur(12px);
@@ -394,7 +365,6 @@ def inject_custom_css():
                 bottom: -3px; right: -3px; width: 6px; height: 6px; background-color: #064e3b;
             }
             
-            /* Custom Scrollbar */
             ::-webkit-scrollbar {
                 width: 6px;
             }
@@ -405,7 +375,6 @@ def inject_custom_css():
                 background: #bfc9c3;
             }
 
-            /* Card Grid and Cluster Cards */
             .card-grid-container {
                 display: grid;
                 grid-template-columns: repeat(3, 1fr);
@@ -553,7 +522,6 @@ def inject_custom_css():
                 text-transform: uppercase;
             }
 
-            /* Technical Pipeline Timeline Styling */
             .pipeline-container {
                 position: relative;
                 max-width: 900px;
@@ -657,7 +625,6 @@ def inject_custom_css():
                 opacity: 0.8;
             }
             
-            /* Responsive styling for mobile */
             @media (max-width: 768px) {
                 .pipeline-line {
                     left: 20px;
@@ -723,10 +690,10 @@ def render_falling_leaves():
     let leaves = [];
     const numLeaves = Math.min(Math.floor(window.innerWidth / 35), 40);
     const colors = [
-      'rgba(6, 78, 59, 0.15)',   // primary-container
-      'rgba(149, 211, 186, 0.25)', // primary-fixed-dim
-      'rgba(191, 201, 195, 0.18)', // outline-variant
-      'rgba(43, 105, 84, 0.12)'    // surface-tint
+      'rgba(6, 78, 59, 0.15)',
+      'rgba(149, 211, 186, 0.25)',
+      'rgba(191, 201, 195, 0.18)',
+      'rgba(43, 105, 84, 0.12)'
     ];
     
     function resize() {
@@ -740,9 +707,9 @@ def render_falling_leaves():
         return {
             x: Math.random() * canvas.width,
             y: resetY ? -20 : Math.random() * canvas.height,
-            size: Math.random() * 5 + 4, // 4 to 9
+            size: Math.random() * 5 + 4,
             speedX: Math.random() * 0.6 - 0.3,
-            speedY: Math.random() * 0.5 + 0.3, // 0.3 to 0.8
+            speedY: Math.random() * 0.5 + 0.3,
             rotation: Math.random() * Math.PI * 2,
             rotationSpeed: (Math.random() - 0.5) * 0.02,
             oscillationSpeed: Math.random() * 0.008 + 0.004,
@@ -767,7 +734,6 @@ def render_falling_leaves():
         ctx.fillStyle = leaf.color;
         ctx.fill();
         
-        // stem vein
         ctx.beginPath();
         ctx.moveTo(0, -leaf.size * 0.8);
         ctx.lineTo(0, leaf.size * 1.1);
@@ -807,11 +773,9 @@ def render_falling_leaves():
 render_falling_leaves()
 
 # --- Page Routing System ---
-# Get current URL query parameter
 query_params = st.query_params
 current_page = query_params.get("page", "home")
 
-# Render Top Navigation Bar HTML
 active_home = "active" if current_page == "home" else ""
 active_peringkas = "active" if current_page == "peringkas" else ""
 active_hasil = "active" if current_page in ["hasil", "detail"] else ""
@@ -832,14 +796,12 @@ st.markdown(
     unsafe_allow_html=True
 )
 
-# Render main page content wrapper
 st.markdown('<div class="main-content">', unsafe_allow_html=True)
 
 # ----------------- 1. BERANDA (HOME) PAGE -----------------
 if current_page == "home":
     banyan_base64 = get_base64_image("frontend/public/banyan.png")
     
-    # Hero Section
     st.markdown(
         f"""
         <div style="text-align: center; max-width: 1200px; margin: 40px auto 100px auto; padding: 0 40px;">
@@ -863,7 +825,6 @@ if current_page == "home":
         unsafe_allow_html=True
     )
     
-    # Philosophy Section
     col1, col2 = st.columns([1, 1], gap="large")
     with col1:
         st.markdown(
@@ -885,7 +846,6 @@ if current_page == "home":
             unsafe_allow_html=True
         )
     with col2:
-        # Styled video container
         st.markdown('<div class="video-container">', unsafe_allow_html=True)
         if os.path.exists("frontend/public/tree-video.mp4"):
             st.video("frontend/public/tree-video.mp4", autoplay=True, loop=True, muted=True)
@@ -902,7 +862,6 @@ if current_page == "home":
         
     st.markdown("<br><br><br><br>", unsafe_allow_html=True)
     
-    # Technical Pipeline Flowchart Section
     st.markdown(
         """
         <div style="text-align: center; margin-bottom: 64px;">
@@ -913,7 +872,6 @@ if current_page == "home":
         unsafe_allow_html=True
     )
     
-    # Render flowchart HTML
     pipeline_html = """
     <div class="pipeline-container">
         <div class="pipeline-line"></div>
@@ -970,7 +928,6 @@ if current_page == "home":
     cleaned_pipeline_html = "\n".join([line.strip() for line in pipeline_html.split("\n") if line.strip()])
     st.markdown(cleaned_pipeline_html, unsafe_allow_html=True)
     
-    # Footer
     st.markdown("<br><br><br><hr style='border-color: #bfc9c3;'><br>", unsafe_allow_html=True)
     st.markdown(
         """
@@ -998,11 +955,9 @@ elif current_page == "peringkas":
         unsafe_allow_html=True
     )
     
-    # We build the container for the form
     st.markdown('<div class="form-container">', unsafe_allow_html=True)
     st.markdown('<div class="form-bottom-left"></div><div class="form-bottom-right"></div>', unsafe_allow_html=True)
     
-    # Form fields using native Streamlit widgets styled with custom classes
     categories = {
         "tekno": "Teknologi & Inovasi",
         "crypto": "Kripto & Blockchain",
@@ -1020,7 +975,6 @@ elif current_page == "peringkas":
             options=list(categories.values()),
             index=0
         )
-        # Reverse map category label to key
         category_key = [k for k, v in categories.items() if v == category_label][0]
         
     with col_b:
@@ -1040,7 +994,6 @@ elif current_page == "peringkas":
     
     st.markdown("<br>", unsafe_allow_html=True)
     
-    # Advanced Options Accordion
     with st.expander("OPSI LANJUTAN", expanded=False):
         st.markdown(
             """
@@ -1068,31 +1021,24 @@ elif current_page == "peringkas":
         )
     
     st.markdown("</div>", unsafe_allow_html=True)
-    
     st.markdown("<br><br>", unsafe_allow_html=True)
     
-    # Trigger button centered
     col_c1, col_c2, col_c3 = st.columns([1, 2, 1])
     with col_c2:
         start_btn = st.button("MULAI MERINGKAS", use_container_width=True, type="primary")
         
     if start_btn:
-        # Start Pipeline Loading Overlay
         progress_placeholder = st.empty()
-        
-        # Helper logs formatting
         date_str = target_date.strftime("%Y-%m-%d")
         
         try:
             articles = []
             
-            # Step 1: Scrape
             scraper_gen = scrape_articles_pipeline_generator(category_key, date_str, max_articles)
             for update in scraper_gen:
                 prog = update.get("progress", 0)
                 msg = update.get("message", "Scraping...")
                 
-                # Check for results
                 if "results" in update:
                     articles = update.pop("results")
                     
@@ -1120,7 +1066,6 @@ elif current_page == "peringkas":
                 """, unsafe_allow_html=True)
                 st.stop()
                 
-            # Step 2: Summarize (Clustering & MMR)
             final_clusters = []
             summarizer_gen = summarize_pipeline_generator(articles, compression_rate=compression, lambda_param=lambda_param)
             
@@ -1144,22 +1089,19 @@ elif current_page == "peringkas":
                 """, unsafe_allow_html=True)
             
             if final_clusters:
-                # Add metadata parameters to each cluster
                 for c in final_clusters:
                     c['compression_rate'] = compression
                     c['lambda_value'] = lambda_param
                     c['category'] = category_key
                     c['date'] = date_str
                 
-                # Save to local cache file
                 save_clusters_to_cache(final_clusters)
                 
-                # Save to MySQL database if SessionLocal is available
                 try:
                     db = SessionLocal()
                     if db:
                         for c in final_clusters:
-                            history = SummaryHistory(
+                             history = SummaryHistory(
                                 id=str(uuid.uuid4()),
                                 date_crawled=target_date,
                                 category=category_key,
@@ -1168,14 +1110,13 @@ elif current_page == "peringkas":
                                 summary_text=c['summary'],
                                 compression_rate=float(compression) / 100.0,
                                 lambda_value=lambda_param
-                            )
-                            db.add(history)
+                             )
+                             db.add(history)
                         db.commit()
                         db.close()
                 except Exception as db_err:
                     print(f"Warning: Failed to save to database: {db_err}")
                 
-                # Complete loading success and trigger transition
                 progress_placeholder.empty()
                 st.query_params["page"] = "hasil"
                 st.rerun()
@@ -1205,7 +1146,6 @@ elif current_page == "peringkas":
 
 # ----------------- 3. HASIL (RESULTS LIST) PAGE -----------------
 elif current_page == "hasil":
-    # Tab selector for Current Run vs Database History
     run_mode = st.radio(
         "Tinjau Hasil Dari:",
         options=["Hasil Ringkasan Terkini", "Riwayat Database"],
@@ -1220,7 +1160,6 @@ elif current_page == "hasil":
     if run_mode == "Hasil Ringkasan Terkini":
         clusters = load_clusters_from_cache()
         
-        # Header Section
         st.markdown(
             """
             <div style="display: flex; justify-content: space-between; align-items: flex-end; border-bottom: 0.5px solid #bfc9c3; padding-bottom: 32px; margin-bottom: 48px; flex-wrap: wrap; gap: 24px;">
@@ -1234,7 +1173,6 @@ elif current_page == "hasil":
         )
         
         if clusters:
-            # Clear cache action button
             if st.button("BERSIHKAN HASIL", type="secondary"):
                 if os.path.exists(CACHE_FILE):
                     os.remove(CACHE_FILE)
@@ -1242,7 +1180,6 @@ elif current_page == "hasil":
                 st.rerun()
                 
     else:
-        # Load from database history
         try:
             db = SessionLocal()
             if db:
@@ -1257,7 +1194,7 @@ elif current_page == "hasil":
                         "lambda_value": h.lambda_value,
                         "category": h.category,
                         "date": h.date_crawled.strftime("%Y-%m-%d") if h.date_crawled else "",
-                        "articles": [] # Articles list is not saved in MySQL DB
+                        "articles": []
                     })
                 db.close()
         except Exception as db_err:
@@ -1288,12 +1225,10 @@ elif current_page == "hasil":
             unsafe_allow_html=True
         )
     else:
-        # Split clusters into Multi-Article (Klaster Terpadu) and Single-Article (Berita Tunggal)
         multi_clusters = [c for c in clusters if c.get('article_count', 0) > 1]
         single_clusters = [c for c in clusters if c.get('article_count', 0) <= 1]
         safe_mode = 'db' if run_mode != 'Hasil Ringkasan Terkini' else 'cache'
-
-        # Render Multi-Article Clusters
+ 
         if multi_clusters:
             st.markdown(
                 """
@@ -1305,10 +1240,9 @@ elif current_page == "hasil":
                 unsafe_allow_html=True
             )
             _render_card_grid(multi_clusters, safe_mode, card_type="multi")
-
+ 
         st.markdown("<br><br>", unsafe_allow_html=True)
-
-        # Render Single-Article Outliers
+ 
         if single_clusters:
             st.markdown(
                 """
@@ -1321,7 +1255,6 @@ elif current_page == "hasil":
             )
             _render_card_grid(single_clusters, safe_mode, card_type="single")
 
-
 # ----------------- 4. DETAIL RINGKASAN TOPiK PAGE -----------------
 elif current_page == "detail":
     cluster_id = query_params.get("id")
@@ -1329,21 +1262,17 @@ elif current_page == "detail":
     
     cluster_data = None
     
-    # Load cluster details
     if mode == "cache":
         clusters = load_clusters_from_cache()
-        # Find by ID or index
         found = [c for c in clusters if c.get('cluster_id') is not None and str(c.get('cluster_id')) == str(cluster_id)]
         if found:
             cluster_data = found[0]
         else:
-            # Fallback to index lookup
             try:
                 cluster_data = clusters[int(cluster_id)]
             except:
                 pass
     else:
-        # Load from MySQL database
         try:
             db = SessionLocal()
             if db:
@@ -1358,7 +1287,7 @@ elif current_page == "detail":
                         "lambda_value": h.lambda_value,
                         "category": h.category,
                         "date": h.date_crawled.strftime("%Y-%m-%d") if h.date_crawled else "",
-                        "articles": [] # Not saved in DB
+                        "articles": []
                     }
                 db.close()
         except Exception as db_err:
@@ -1369,8 +1298,6 @@ elif current_page == "detail":
         st.markdown('<a href="?page=hasil" target="_self">Kembali ke Daftar Klaster</a>', unsafe_allow_html=True)
         st.stop()
         
-    # Render Detail view
-    # Back Button
     st.markdown(
         """
         <a href="?page=hasil" target="_self" style="display: inline-flex; align-items: center; gap: 8px; color: #707974; text-decoration: none; font-size: 14px; margin-bottom: 32px;" class="back-link">
@@ -1381,10 +1308,8 @@ elif current_page == "detail":
         unsafe_allow_html=True
     )
     
-    # Detail Column layout (Max reading width 768px)
     c_read1, c_read2, c_read3 = st.columns([1, 4, 1])
     with c_read2:
-        # Header Metadata
         st.markdown(
             f"""
             <div style="margin-bottom: 48px;">
@@ -1410,7 +1335,6 @@ elif current_page == "detail":
             unsafe_allow_html=True
         )
         
-        # Summary Content paragraphs
         paragraphs = split_summary_into_paragraphs(cluster_data['summary'], sentences_per_paragraph=3)
         for p in paragraphs:
             st.markdown(
@@ -1424,7 +1348,6 @@ elif current_page == "detail":
             
         st.markdown("<br>", unsafe_allow_html=True)
         
-        # Source articles reference list
         if cluster_data.get('articles'):
             st.markdown(
                 """
@@ -1448,7 +1371,6 @@ elif current_page == "detail":
                 )
             st.markdown("</ul></div>", unsafe_allow_html=True)
             
-        # Copy to Clipboard and Export Action Bar
         st.markdown("<hr style='border-color: #bfc9c3; margin-top: 40px;'>", unsafe_allow_html=True)
         
         col_act1, col_act2 = st.columns([1, 1])
@@ -1469,13 +1391,10 @@ elif current_page == "detail":
                 unsafe_allow_html=True
             )
             
-            # Since standard JavaScript clipboards inside Streamlit components have sandbox rules,
-            # we will print a copy block at the bottom. We also render copy using st.code in an expander.
             copy_expander = st.expander("Salin Teks Ringkasan")
             with copy_expander:
                 st.code(cluster_data['summary'], language="text")
                 
-            # Text download button
             st.download_button(
                 label="Ekspor Teks",
                 data=cluster_data['summary'],
@@ -1484,5 +1403,4 @@ elif current_page == "detail":
                 use_container_width=True
             )
 
-# Close main content div
 st.markdown('</div>', unsafe_allow_html=True)
