@@ -11,8 +11,12 @@ try:
     UNDETECTED_AVAILABLE = True
 except ImportError:
     UNDETECTED_AVAILABLE = False
-    from selenium import webdriver
-    from selenium.webdriver.chrome.options import Options
+
+try:
+    from selenium import webdriver as _selenium_webdriver  # noqa: F401
+    SELENIUM_AVAILABLE = True
+except ImportError:
+    SELENIUM_AVAILABLE = False
 
 class SeleniumUtils:
     @staticmethod
