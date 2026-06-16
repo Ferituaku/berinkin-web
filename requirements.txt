@@ -1,0 +1,19 @@
+# ── Core Streamlit ─────────────────────────────────────────────────────────────
+streamlit>=1.35.0
+
+# ── Scraping (requests-based, no Chrome needed on cloud) ───────────────────────
+requests>=2.31.0
+beautifulsoup4>=4.12.0
+
+# ── NLP / Summarization ────────────────────────────────────────────────────────
+sentence-transformers>=2.7.0
+scikit-learn>=1.4.0
+nltk>=3.8.0
+Sastrawi>=1.0.1
+
+# ── Database (SQLite via SQLAlchemy – no server needed) ────────────────────────
+SQLAlchemy>=2.0.0
+
+# ── Utilities ──────────────────────────────────────────────────────────────────
+pandas>=2.0.0
+numpy>=1.26.0
