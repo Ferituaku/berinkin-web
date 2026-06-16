@@ -43,7 +43,10 @@ class SummaryHistory(Base):
 
 def init_db():
     if engine:
-        Base.metadata.create_all(bind=engine)
+        try:
+            Base.metadata.create_all(bind=engine)
+        except Exception as e:
+            print(f"Database initialization failed (tables could not be created): {e}")
 
 def get_db():
     if not SessionLocal:

@@ -39,7 +39,8 @@ export default function Peringkas() {
     setLoadingText("Memulai koneksi ke server...");
     
     try {
-      const response = await fetch('http://localhost:8000/api/summarize', {
+      const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000/api';
+      const response = await fetch(`${apiUrl}/summarize`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ category, date, max_articles: maxArticles, compression, lambda_param: lambda })

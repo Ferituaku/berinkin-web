@@ -12,3 +12,4 @@ scikit-learn
 Sastrawi
 nltk
 pandas
+streamlit

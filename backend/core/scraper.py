@@ -4,6 +4,7 @@ from bs4 import BeautifulSoup
 from datetime import datetime
 import json
 import os
+import requests
 
 try:
     import undetected_chromedriver as uc
@@ -41,23 +42,189 @@ class EnhancedChromeDriver:
     def __init__(self, headless=True):
         self.headless = headless
 
+    def _build_chrome_options_base(self):
+        """Returns a list of robust Chrome flags for headless server environments."""
+        return [
+            '--no-sandbox',
+            '--disable-dev-shm-usage',
+            '--disable-gpu',
+            '--disable-blink-features=AutomationControlled',
+            '--disable-extensions',
+            '--disable-infobars',
+            '--disable-setuid-sandbox',
+            '--single-process',
+            '--ignore-certificate-errors',
+            '--log-level=3',
+            '--window-size=1366,768',
+            '--user-agent=Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/149.0.0.0 Safari/537.36',
+        ]
+
     def create_driver(self):
+        flags = self._build_chrome_options_base()
+
+        # --- Attempt 1: undetected-chromedriver ---
         if UNDETECTED_AVAILABLE:
-            options = uc.ChromeOptions()
-            if self.headless: options.add_argument('--headless=new')
-            options.add_argument('--no-sandbox')
-            options.add_argument('--disable-blink-features=AutomationControlled')
-            # Adjust version_main if necessary based on local Chrome
-            driver = uc.Chrome(options=options, version_main=147)
-        else:
+            try:
+                options = uc.ChromeOptions()
+                if self.headless:
+                    options.add_argument('--headless=new')
+                for flag in flags:
+                    options.add_argument(flag)
+                driver = uc.Chrome(options=options)
+                driver.set_window_size(1366, 768)
+                return driver
+            except Exception as e:
+                print(f"Warning: undetected_chromedriver failed ({type(e).__name__}). Trying standard Selenium...")
+
+        # --- Attempt 2: Standard Selenium webdriver ---
+        try:
+            from selenium import webdriver
+            from selenium.webdriver.chrome.options import Options
+            from selenium.webdriver.chrome.service import Service
             options = Options()
-            if self.headless: options.add_argument('--headless=new')
-            options.add_argument('--no-sandbox')
-            options.add_argument('--disable-blink-features=AutomationControlled')
-            driver = webdriver.Chrome(options=options)
-        
-        driver.set_window_size(1366, 768)
-        return driver
+            if self.headless:
+                options.add_argument('--headless=new')
+            for flag in flags:
+                options.add_argument(flag)
+            # Try with webdriver-manager if available, otherwise use system PATH
+            try:
+                from webdriver_manager.chrome import ChromeDriverManager
+                service = Service(ChromeDriverManager().install())
+                driver = webdriver.Chrome(service=service, options=options)
+            except Exception:
+                driver = webdriver.Chrome(options=options)
+            driver.set_window_size(1366, 768)
+            return driver
+        except Exception as e:
+            print(f"Warning: Standard Selenium also failed ({type(e).__name__}): {e}")
+            return None
+
+# ─── Requests-based fallback scraper (no Chrome needed) ──────────────────────
+
+class Liputan6RequestsScraper:
+    """Light-weight scraper using requests + BeautifulSoup.
+    Used as a last resort when ChromeDriver cannot be launched."""
+
+    HEADERS = {
+        'User-Agent': (
+            'Mozilla/5.0 (Windows NT 10.0; Win64; x64) '
+            'AppleWebKit/537.36 (KHTML, like Gecko) '
+            'Chrome/124.0.0.0 Safari/537.36'
+        ),
+        'Accept-Language': 'id-ID,id;q=0.9,en-US;q=0.8,en;q=0.7',
+        'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
+    }
+
+    def __init__(self):
+        self.base_url = 'https://www.liputan6.com'
+        self.session = requests.Session()
+        self.session.headers.update(self.HEADERS)
+
+    def _get(self, url, timeout=15):
+        try:
+            resp = self.session.get(url, timeout=timeout)
+            resp.raise_for_status()
+            return resp.text
+        except Exception as e:
+            print(f"[RequestsScraper] GET {url} failed: {e}")
+            return None
+
+    def scrape_category_list(self, category, target_date=None, max_articles=15):
+        mapping = {
+            'saham': 'saham', 'bisnis': 'bisnis', 'crypto': 'crypto',
+            'tekno': 'tekno', 'otomotif': 'otomotif', 'health': 'health', 'bola': 'bola'
+        }
+        path = mapping.get(category.lower(), category.lower())
+        articles_data = []
+        seen_urls = set()
+
+        if target_date:
+            try:
+                date_obj = datetime.strptime(target_date, "%Y-%m-%d")
+                y, m, d = date_obj.strftime("%Y"), date_obj.strftime("%m"), date_obj.strftime("%d")
+                page = 1
+                while len(articles_data) < max_articles:
+                    url = f"{self.base_url}/{path}/indeks/{y}/{m}/{d}?page={page}"
+                    html = self._get(url)
+                    if not html:
+                        break
+                    soup = BeautifulSoup(html, 'html.parser')
+                    items = soup.find_all('article', class_=lambda x: x and ('articles--iridescent-list--item' in x or 'articles--rows--item' in x))
+                    if not items:
+                        items = soup.find_all('div', class_='articles--iridescent-list--text-item')
+                    if not items:
+                        break
+                    pre = len(articles_data)
+                    for el in items:
+                        if len(articles_data) >= max_articles:
+                            break
+                        link = el.find('a', href=True)
+                        if not link:
+                            continue
+                        href = link['href']
+                        title = link.get('title') or link.get_text(strip=True)
+                        if not href.startswith('http') or href in seen_urls:
+                            continue
+                        if 'top 3' in title.lower():
+                            continue
+                        seen_urls.add(href)
+                        articles_data.append({'url': href, 'title': title, 'category': category, 'scraped_at': datetime.now().isoformat()})
+                    if len(articles_data) == pre:
+                        break
+                    page += 1
+            except Exception as ex:
+                print(f"[RequestsScraper] date-based scrape failed: {ex}")
+        else:
+            html = self._get(f"{self.base_url}/{path}")
+            if html:
+                soup = BeautifulSoup(html, 'html.parser')
+                items = soup.find_all('article', class_=lambda x: x and ('articles--iridescent-list--item' in x or 'articles--rows--item' in x))
+                if not items:
+                    items = soup.find_all('div', class_='articles--iridescent-list--text-item')
+                for el in items:
+                    if len(articles_data) >= max_articles:
+                        break
+                    link = el.find('a', href=True)
+                    if not link:
+                        continue
+                    href = link['href']
+                    title = link.get('title') or link.get_text(strip=True)
+                    if not href.startswith('http') or href in seen_urls:
+                        continue
+                    if 'top 3' in title.lower():
+                        continue
+                    seen_urls.add(href)
+                    articles_data.append({'url': href, 'title': title, 'category': category, 'scraped_at': datetime.now().isoformat()})
+        return articles_data
+
+    def get_article_content(self, url):
+        html = self._get(url + '?page=all')
+        if not html:
+            return None
+        try:
+            soup = BeautifulSoup(html, 'html.parser')
+            title_elem = soup.find('h1', class_='read-page--header--title')
+            title = title_elem.get_text(separator=' ', strip=True) if title_elem else ''
+            date_elem = soup.find('p', class_='read-page--header--author__datetime')
+            date = date_elem.get_text(separator=' ', strip=True) if date_elem else ''
+            content_divs = soup.find_all('div', class_=lambda x: x and 'article-content-body' in x)
+            valid_p = []
+            for div in content_divs:
+                for unwanted in div.find_all(['script', 'iframe', 'style', 'figure']):
+                    unwanted.decompose()
+                for p in div.find_all(['p', 'div']):
+                    text = p.get_text(separator=' ', strip=True)
+                    if not text or len(text) < 30:
+                        continue
+                    if any(n in text for n in ['Baca Juga', 'Simak Video', 'BACA JUGA', 'Saksikan video', 'ADVERTISEMENT']):
+                        continue
+                    if text not in valid_p:
+                        valid_p.append(text)
+            return {'title': title, 'date': date, 'content': ' '.join(valid_p)}
+        except Exception as e:
+            return None
+
+# ─────────────────────────────────────────────────────────────────────────────
 
 class Liputan6Scraper:
     def __init__(self, driver):
@@ -213,23 +380,33 @@ class Liputan6Scraper:
 def scrape_articles_pipeline_generator(category: str, target_date: str, max_items=10):
     """
     Generator pipeline to scrape articles and yield progress.
+    Tries Chrome (undetected then standard), then falls back to requests.
     """
     driver_manager = EnhancedChromeDriver(headless=True)
     driver = None
+    use_requests_fallback = False
     try:
         yield {"progress": 5, "message": "Memulai Chrome Driver..."}
         driver = driver_manager.create_driver()
-        scraper = Liputan6Scraper(driver)
-        
+
+        if driver is None:
+            yield {"progress": 8, "message": "Chrome tidak tersedia – menggunakan mode requests (tanpa browser)..."}
+            use_requests_fallback = True
+
+        if use_requests_fallback:
+            scraper = Liputan6RequestsScraper()
+        else:
+            scraper = Liputan6Scraper(driver)
+
         yield {"progress": 10, "message": f"Mencari daftar berita {category}..."}
         articles = scraper.scrape_category_list(category, target_date=target_date, max_articles=max_items)
-        
+
         results = []
         total = len(articles)
         if total == 0:
             yield {"progress": 30, "message": "Tidak ada artikel ditemukan.", "results": []}
             return
-            
+
         if total < max_items:
             yield {"progress": 15, "message": f"Hanya ditemukan {total} artikel dari target {max_items}. Melanjutkan proses..."}
 
@@ -245,10 +422,13 @@ def scrape_articles_pipeline_generator(category: str, target_date: str, max_item
                     'category': category,
                     'date': detail['date'] or target_date
                 })
-        
+
         yield {"progress": 35, "message": "Scraping selesai.", "results": results}
     except Exception as e:
         yield {"progress": 35, "message": f"Scraping error: {e}", "results": []}
     finally:
         if driver:
-            driver.quit()
+            try:
+                driver.quit()
+            except Exception:
+                pass
