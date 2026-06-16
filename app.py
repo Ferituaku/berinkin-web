@@ -58,6 +58,138 @@ def get_base64_image(image_path):
             return f"data:image/png;base64,{base64.b64encode(img_file.read()).decode()}"
     return ""
 
+def _render_card_grid(clusters, mode, card_type="multi"):
+    """Render cluster cards as a CSS-grid iframe (bypasses Streamlit HTML sanitizer).
+
+    Uses st.components.v1.html() so the HTML is rendered inside an iframe with
+    no Streamlit markdown post-processing. Anchor tags use target='_parent' so
+    clicking a card navigates the parent Streamlit page.
+    """
+    import html as _h
+    cards = []
+    for idx, cluster in enumerate(clusters):
+        cluster_key = cluster.get('cluster_id', str(idx))
+        title     = _h.escape(str(cluster.get('topic_title', '')))
+        summary   = _h.escape(str(cluster.get('summary', ''))[:280])
+        category  = _h.escape(str(cluster.get('category', '')))
+        art_count = cluster.get('article_count', 1)
+        comp      = cluster.get('compression_rate', 30)
+        lmb       = cluster.get('lambda_value', 0.7)
+
+        if card_type == "multi":
+            label        = f"KLASTER #{idx + 1}"
+            border_col   = "#064e3b"
+            title_col    = "#003527"
+            action_txt   = "Baca Ringkasan"
+            action_col   = "#064e3b"
+            opacity      = "1"
+            corner_nodes = """
+                <div class="cn tl"></div><div class="cn tr"></div>
+                <div class="cn bl"></div><div class="cn br"></div>"""
+            badges_extra = (
+                f'<span class="badge-cat">{category}</span>' if category else ''
+            )
+            badges = (
+                f'<span class="badge">Kompresi: {comp}%</span>'
+                f'<span class="badge">Lambda: {lmb}</span>'
+                f'{badges_extra}'
+            )
+        else:
+            label        = f"BERITA #{idx + 1}"
+            border_col   = "#bfc9c3"
+            title_col    = "#1a1c1a"
+            action_txt   = "Lihat Detail"
+            action_col   = "#707974"
+            opacity      = "0.8"
+            corner_nodes = ""
+            badges       = '<span class="badge-warn">Tidak Teringkas</span>'
+
+        cards.append(f"""
+<a class="card" href="?page=detail&id={cluster_key}&mode={mode}"
+   target="_parent" style="opacity:{opacity};">
+  {corner_nodes}
+  <div class="card-header" style="border-left-color:{border_col};">
+    <span class="label">{label}</span>
+    <span class="src"><span class="mi">article</span>{art_count} SUMBER</span>
+  </div>
+  <div class="card-body">
+    <h3 style="color:{title_col};">{title}</h3>
+    <div class="badges">{badges}</div>
+    <p class="excerpt">{summary}</p>
+  </div>
+  <div class="card-foot" style="color:{action_col};">
+    <span>{action_txt}</span>
+    <span class="mi">arrow_forward</span>
+  </div>
+</a>""")
+
+    rows = max(1, (len(clusters) + 2) // 3)
+    card_h = 320  # px per card row
+    iframe_h = rows * card_h + 24
+
+    full_html = f"""<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Newsreader:opsz,wght@6..72,500;6..72,700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,400,0,0"/>
+<style>
+*{{box-sizing:border-box;margin:0;padding:0;}}
+body{{background:transparent;font-family:'Inter',sans-serif;padding:2px 0;}}
+.grid{{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;}}
+.card{{
+  background:rgba(255,255,255,0.9);
+  border:0.5px solid #bfc9c3;
+  padding:24px;
+  position:relative;
+  display:flex;
+  flex-direction:column;
+  gap:14px;
+  min-height:300px;
+  text-decoration:none;
+  color:#1a1c1a;
+  transition:all 0.25s ease;
+  border-radius:0;
+}}
+.card:hover{{
+  border-color:#064e3b;
+  background:rgba(255,255,255,1);
+  box-shadow:0 8px 24px -4px rgba(0,53,39,0.1);
+  transform:translateY(-2px);
+}}
+.cn{{position:absolute;width:6px;height:6px;background:#064e3b;}}
+.tl{{top:-3px;left:-3px}}.tr{{top:-3px;right:-3px}}
+.bl{{bottom:-3px;left:-3px}}.br{{bottom:-3px;right:-3px}}
+.card-header{{
+  display:flex;justify-content:space-between;align-items:center;
+  border-left:2px solid;padding-left:10px;
+}}
+.label{{font-size:10px;font-weight:700;color:#404944;letter-spacing:.1em;text-transform:uppercase;}}
+.src{{display:flex;align-items:center;gap:3px;font-size:10px;font-weight:700;color:#707974;letter-spacing:.05em;}}
+.mi{{font-family:'Material Symbols Outlined';font-size:15px;font-weight:400;line-height:1;}}
+.card-body{{flex:1;display:flex;flex-direction:column;gap:10px;}}
+h3{{font-family:'Newsreader',serif;font-size:20px;line-height:1.35;font-weight:500;}}
+.badges{{display:flex;gap:6px;flex-wrap:wrap;}}
+.badge{{font-size:9px;font-weight:700;background:#e3e2e0;color:#404944;padding:3px 7px;text-transform:uppercase;letter-spacing:.05em;}}
+.badge-cat{{font-size:9px;font-weight:700;background:#95d3ba;color:#002117;padding:3px 7px;text-transform:uppercase;}}
+.badge-warn{{font-size:9px;font-weight:700;background:#ffdad6;color:#ba1a1a;border:0.5px solid #ffdad6;padding:3px 7px;text-transform:uppercase;}}
+.excerpt{{font-size:13px;line-height:1.55;color:#404944;display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden;}}
+.card-foot{{
+  margin-top:auto;padding-top:14px;border-top:0.5px solid #e3e2e0;
+  display:flex;justify-content:space-between;align-items:center;
+  font-size:11px;font-weight:600;letter-spacing:.05em;text-transform:uppercase;
+}}
+</style>
+</head>
+<body>
+<div class="grid">
+{''.join(cards)}
+</div>
+</body>
+</html>"""
+
+    st.components.v1.html(full_html, height=iframe_h, scrolling=False)
+
 def split_summary_into_paragraphs(summary_text, sentences_per_paragraph=3):
     """Splits summary text into paragraphs of N sentences each.
     Uses NLTK punkt tokenizer if available, falls back to simple regex.
@@ -940,7 +1072,8 @@ elif current_page == "hasil":
         # Split clusters into Multi-Article (Klaster Terpadu) and Single-Article (Berita Tunggal)
         multi_clusters = [c for c in clusters if c.get('article_count', 0) > 1]
         single_clusters = [c for c in clusters if c.get('article_count', 0) <= 1]
-        
+        safe_mode = 'db' if run_mode != 'Hasil Ringkasan Terkini' else 'cache'
+
         # Render Multi-Article Clusters
         if multi_clusters:
             st.markdown(
@@ -952,63 +1085,7 @@ elif current_page == "hasil":
                 """,
                 unsafe_allow_html=True
             )
-            
-            # Display grid of cards using columns
-            # We display 3 cards per row
-            for row_idx in range(0, len(multi_clusters), 3):
-                row_cols = st.columns(3)
-                for col_idx in range(3):
-                    idx = row_idx + col_idx
-                    if idx < len(multi_clusters):
-                        cluster = multi_clusters[idx]
-                        
-                        # Determine unique identifier (can be cluster_id or index)
-                        cluster_key = cluster.get('cluster_id', str(idx))
-                        
-                        with row_cols[col_idx]:
-                             # Escape dynamic content to prevent HTML breakage
-                             safe_title = _html.escape(str(cluster.get('topic_title', '')))
-                             safe_summary = _html.escape(str(cluster.get('summary', ''))[:300])
-                             safe_category = _html.escape(str(cluster.get('category', '')))
-                             safe_mode = 'db' if run_mode != 'Hasil Ringkasan Terkini' else 'cache'
-                             # Render card with an HTML anchor that passes detail page arguments via query parameters
-                             card_html = f"""
-                             <a href="?page=detail&id={cluster_key}&mode={safe_mode}" target="_self" class="cluster-card">
-                                 <div class="corner-node top-left"></div>
-                                 <div class="corner-node top-right"></div>
-                                 <div class="corner-node bottom-left"></div>
-                                 <div class="corner-node bottom-right"></div>
-                                 
-                                 <div style="display: flex; justify-content: space-between; align-items: center; border-left: 2px solid #064e3b; padding-left: 12px; margin-bottom: 8px;">
-                                     <span style="font-size: 11px; font-weight: 600; color: #404944; letter-spacing: 0.1em; text-transform: uppercase;">KLASTER #{idx + 1}</span>
-                                     <div style="display: flex; align-items: center; gap: 4px; color: #707974;">
-                                         <span class="material-symbols-outlined" style="font-size: 16px;">article</span>
-                                         <span style="font-size: 11px; font-weight: 600; letter-spacing: 0.1em;">{cluster['article_count']} SUMBER</span>
-                                     </div>
-                                 </div>
-                                 
-                                 <div>
-                                     <h3 style="font-size: 24px; line-height: 1.3; font-family: 'Newsreader', serif; margin-bottom: 12px; color: #003527; font-weight: 500;">
-                                         {safe_title}
-                                     </h3>
-                                     <div style="display: flex; gap: 8px; margin-bottom: 16px; flex-wrap: wrap;">
-                                         <span style="font-size: 10px; font-weight: 700; background-color: #e3e2e0; color: #404944; padding: 4px 8px; text-transform: uppercase; letter-spacing: 0.05em;">Kompresi: {cluster.get('compression_rate', 30)}%</span>
-                                         <span style="font-size: 10px; font-weight: 700; background-color: #e3e2e0; color: #404944; padding: 4px 8px; text-transform: uppercase; letter-spacing: 0.05em;">Lambda: {cluster.get('lambda_value', 0.7)}</span>
-                                         {f"<span style='font-size: 10px; font-weight: 700; background-color: #95d3ba; color: #002117; padding: 4px 8px; text-transform: uppercase;'>{safe_category}</span>" if safe_category else ''}
-                                     </div>
-                                     <p style="font-size: 15px; line-height: 1.5; color: #404944; display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; margin: 0;">
-                                         {safe_summary}
-                                     </p>
-                                 </div>
-                                 
-                                 <div style="margin-top: auto; padding-top: 16px; border-top: 0.5px solid #e3e2e0; display: flex; justify-content: space-between; align-items: center;">
-                                     <span style="font-size: 12px; font-weight: 600; color: #064e3b; letter-spacing: 0.05em; text-transform: uppercase;">Baca Ringkasan</span>
-                                     <span class="material-symbols-outlined" style="color: #064e3b;">arrow_forward</span>
-                                 </div>
-                             </a>
-                             """
-                             st.markdown(card_html, unsafe_allow_html=True)
-                             st.markdown("<br>", unsafe_allow_html=True)
+            _render_card_grid(multi_clusters, safe_mode, card_type="multi")
 
         st.markdown("<br><br>", unsafe_allow_html=True)
 
@@ -1023,49 +1100,8 @@ elif current_page == "hasil":
                 """,
                 unsafe_allow_html=True
             )
-            
-            for row_idx in range(0, len(single_clusters), 3):
-                row_cols = st.columns(3)
-                for col_idx in range(3):
-                    idx = row_idx + col_idx
-                    if idx < len(single_clusters):
-                        cluster = single_clusters[idx]
-                        cluster_key = cluster.get('cluster_id', str(idx))
-                        
-                        with row_cols[col_idx]:
-                             safe_title = _html.escape(str(cluster.get('topic_title', '')))
-                             safe_summary = _html.escape(str(cluster.get('summary', ''))[:300])
-                             safe_mode = 'db' if run_mode != 'Hasil Ringkasan Terkini' else 'cache'
-                             card_html = f"""
-                             <a href="?page=detail&id={cluster_key}&mode={safe_mode}" target="_self" class="cluster-card" style="opacity: 0.75;">
-                                 <div style="display: flex; justify-content: space-between; align-items: center; border-left: 2px solid #bfc9c3; padding-left: 12px; margin-bottom: 8px;">
-                                     <span style="font-size: 11px; font-weight: 600; color: #707974; letter-spacing: 0.1em; text-transform: uppercase;">BERITA #{idx + 1}</span>
-                                     <div style="display: flex; align-items: center; gap: 4px; color: #707974;">
-                                         <span class="material-symbols-outlined" style="font-size: 16px;">article</span>
-                                         <span style="font-size: 11px; font-weight: 600; letter-spacing: 0.1em;">1 SUMBER</span>
-                                     </div>
-                                 </div>
-                                 
-                                 <div>
-                                     <h3 style="font-size: 24px; line-height: 1.3; font-family: 'Newsreader', serif; margin-bottom: 12px; color: #1a1c1a; font-weight: 500;">
-                                         {safe_title}
-                                     </h3>
-                                     <div style="display: flex; gap: 8px; margin-bottom: 16px; flex-wrap: wrap;">
-                                         <span style="font-size: 10px; font-weight: 700; background-color: #ffdad6; color: #ba1a1a; border: 0.5px solid #ffdad6; padding: 4px 8px; text-transform: uppercase; letter-spacing: 0.05em;">Tidak Teringkas</span>
-                                     </div>
-                                     <p style="font-size: 15px; line-height: 1.5; color: #404944; display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; margin: 0;">
-                                         {safe_summary}
-                                     </p>
-                                 </div>
-                                 
-                                 <div style="margin-top: auto; padding-top: 16px; border-top: 0.5px solid #e3e2e0; display: flex; justify-content: space-between; align-items: center;">
-                                     <span style="font-size: 12px; font-weight: 600; color: #707974; letter-spacing: 0.05em; text-transform: uppercase;">Lihat Detail</span>
-                                     <span class="material-symbols-outlined" style="color: #707974;">arrow_forward</span>
-                                 </div>
-                             </a>
-                             """
-                             st.markdown(card_html, unsafe_allow_html=True)
-                             st.markdown("<br>", unsafe_allow_html=True)
+            _render_card_grid(single_clusters, safe_mode, card_type="single")
+
 
 # ----------------- 4. DETAIL RINGKASAN TOPiK PAGE -----------------
 elif current_page == "detail":
