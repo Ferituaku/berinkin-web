@@ -339,30 +339,34 @@ def inject_custom_css():
                 border: none !important;
             }
             
-            .form-container {
-                background-color: rgba(255, 255, 255, 0.8);
-                backdrop-filter: blur(12px);
-                border: 0.5px solid #bfc9c3;
-                padding: 40px;
-                position: relative;
+            div[data-testid="stVerticalBlock"]:has(> div > div > div > .form-container-anchor) {
+                background-color: rgba(255, 255, 255, 0.8) !important;
+                backdrop-filter: blur(12px) !important;
+                border: 0.5px solid #bfc9c3 !important;
+                padding: 40px !important;
+                position: relative !important;
             }
-            .form-container::before {
+            div[data-testid="stVerticalBlock"]:has(> div > div > div > .form-container-anchor)::before {
                 content: '';
                 position: absolute;
                 top: -3px; left: -3px; width: 6px; height: 6px; background-color: #064e3b;
+                z-index: 10;
             }
-            .form-container::after {
+            div[data-testid="stVerticalBlock"]:has(> div > div > div > .form-container-anchor)::after {
                 content: '';
                 position: absolute;
                 top: -3px; right: -3px; width: 6px; height: 6px; background-color: #064e3b;
+                z-index: 10;
             }
             .form-bottom-left {
                 position: absolute;
                 bottom: -3px; left: -3px; width: 6px; height: 6px; background-color: #064e3b;
+                z-index: 10;
             }
             .form-bottom-right {
                 position: absolute;
                 bottom: -3px; right: -3px; width: 6px; height: 6px; background-color: #064e3b;
+                z-index: 10;
             }
             
             ::-webkit-scrollbar {
@@ -955,72 +959,70 @@ elif current_page == "peringkas":
         unsafe_allow_html=True
     )
     
-    st.markdown('<div class="form-container">', unsafe_allow_html=True)
-    st.markdown('<div class="form-bottom-left"></div><div class="form-bottom-right"></div>', unsafe_allow_html=True)
-    
-    categories = {
-        "tekno": "Teknologi & Inovasi",
-        "crypto": "Kripto & Blockchain",
-        "bola": "Sepak Bola & Olahraga",
-        "otomotif": "Otomotif & Kendaraan",
-        "health": "Kesehatan & Gaya Hidup",
-        "saham": "Pasar Saham",
-        "bisnis": "Bisnis & Ekonomi"
-    }
-    
-    col_a, col_b = st.columns(2)
-    with col_a:
-        category_label = st.selectbox(
-            "KATEGORI BERITA",
-            options=list(categories.values()),
-            index=0
-        )
-        category_key = [k for k, v in categories.items() if v == category_label][0]
+    with st.container():
+        st.markdown('<div class="form-container-anchor"><div class="form-bottom-left"></div><div class="form-bottom-right"></div></div>', unsafe_allow_html=True)
         
-    with col_b:
-        target_date = st.date_input(
-            "TANGGAL BERITA",
-            value=datetime.date.today()
-        )
+        categories = {
+            "tekno": "Teknologi & Inovasi",
+            "crypto": "Kripto & Blockchain",
+            "bola": "Sepak Bola & Olahraga",
+            "otomotif": "Otomotif & Kendaraan",
+            "health": "Kesehatan & Gaya Hidup",
+            "saham": "Pasar Saham",
+            "bisnis": "Bisnis & Ekonomi"
+        }
         
-    st.markdown("<br>", unsafe_allow_html=True)
-    max_articles = st.slider(
-        "TARGET JUMLAH BERITA (ARTIKEL)",
-        min_value=5,
-        max_value=50,
-        value=15,
-        step=5
-    )
-    
-    st.markdown("<br>", unsafe_allow_html=True)
-    
-    with st.expander("OPSI LANJUTAN", expanded=False):
-        st.markdown(
-            """
-            <div style="font-size: 14px; color: #404944; font-style: italic; border-left: 2px solid #e9c349; padding-left: 12px; margin-bottom: 24px; line-height: 1.5;">
-                Nilai optimal berbasis riset untuk peringkasan multi-dokumen ekstraktif telah dikonfigurasi sebelumnya. Menyesuaikan nilai ini memerlukan pemahaman tentang algoritma MMR (Maximal Marginal Relevance).
-            </div>
-            """,
-            unsafe_allow_html=True
-        )
-        compression = st.slider(
-            "TINGKAT KOMPRESI (%)",
-            min_value=20,
+        col_a, col_b = st.columns(2)
+        with col_a:
+            category_label = st.selectbox(
+                "KATEGORI BERITA",
+                options=list(categories.values()),
+                index=0
+            )
+            category_key = [k for k, v in categories.items() if v == category_label][0]
+            
+        with col_b:
+            target_date = st.date_input(
+                "TANGGAL BERITA",
+                value=datetime.date.today()
+            )
+            
+        st.markdown("<br>", unsafe_allow_html=True)
+        max_articles = st.slider(
+            "TARGET JUMLAH BERITA (ARTIKEL)",
+            min_value=5,
             max_value=50,
-            value=30,
-            step=5,
-            help="20% menghasilkan ringkasan yang padat (sedikit kalimat). 50% menghasilkan ringkasan yang lebih lengkap."
+            value=15,
+            step=5
         )
-        lambda_param = st.slider(
-            "LAMBDA MMR",
-            min_value=0.1,
-            max_value=0.9,
-            value=0.7,
-            step=0.1,
-            help="0.1 mengutamakan keberagaman informasi (mengurangi redundansi). 0.9 mengutamakan kesesuaian semantik dengan topik utama."
-        )
-    
-    st.markdown("</div>", unsafe_allow_html=True)
+        
+        st.markdown("<br>", unsafe_allow_html=True)
+        
+        with st.expander("OPSI LANJUTAN", expanded=False):
+            st.markdown(
+                """
+                <div style="font-size: 14px; color: #404944; font-style: italic; border-left: 2px solid #e9c349; padding-left: 12px; margin-bottom: 24px; line-height: 1.5;">
+                    Nilai optimal berbasis riset untuk peringkasan multi-dokumen ekstraktif telah dikonfigurasi sebelumnya. Menyesuaikan nilai ini memerlukan pemahaman tentang algoritma MMR (Maximal Marginal Relevance).
+                </div>
+                """,
+                unsafe_allow_html=True
+            )
+            compression = st.slider(
+                "TINGKAT KOMPRESI (%)",
+                min_value=20,
+                max_value=50,
+                value=30,
+                step=5,
+                help="20% menghasilkan ringkasan yang padat (sedikit kalimat). 50% menghasilkan ringkasan yang lebih lengkap."
+            )
+            lambda_param = st.slider(
+                "LAMBDA MMR",
+                min_value=0.1,
+                max_value=0.9,
+                value=0.7,
+                step=0.1,
+                help="0.1 mengutamakan keberagaman informasi (mengurangi redundansi). 0.9 mengutamakan kesesuaian semantik dengan topik utama."
+            )
     st.markdown("<br><br>", unsafe_allow_html=True)
     
     col_c1, col_c2, col_c3 = st.columns([1, 2, 1])
